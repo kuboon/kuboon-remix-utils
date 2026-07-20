@@ -1,7 +1,31 @@
 import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import { crawl } from './crawl.ts'
 import type { CrawlResult, RouterLike } from './crawl.ts'
-import { writeResult } from './write.ts'
+import { toOutput } from './output.ts'
+
+/**
+ * Writes one {@link CrawlResult} to disk under `outputDir`.
+ *
+ * The content transform (extension rewriting, HTML vs. script vs. raw bytes) is handled by
+ * {@link toOutput}; this function only performs the filesystem write, so it is the Node-specific
+ * half of the pipeline. A `204 No Content` response is skipped.
+ * @param outputDir Directory to write into.
+ * @param result The crawl result to write.
+ * @returns The absolute output path written, or `null` when the response was skipped.
+ */
+export async function writeResult(outputDir: string, result: CrawlResult): Promise<string | null> {
+  let output = await toOutput(result)
+  if (output == null) {
+    return null
+  }
+
+  let outputPath = path.join(outputDir, output.path)
+  await fs.mkdir(path.dirname(outputPath), { recursive: true })
+  await fs.writeFile(outputPath, output.content)
+
+  return outputPath
+}
 
 /**
  * Options for {@link prerender}.
@@ -40,13 +64,14 @@ export interface PrerenderStats {
 /**
  * Statically renders a site by crawling `router` from the seed `paths` and writing every response
  * to `outDir` (HTML pages as `<pathname>/index.html`, assets under their URL path). This is the
- * batteries-included entry point; use {@link crawl} directly for custom output handling.
+ * batteries-included, Node-based entry point; use {@link crawl} + {@link toOutput} directly for
+ * runtime-agnostic output handling.
  * @param options Prerender options.
  * @returns Counts and the list of files written.
  * @example
  * ```ts
  * import { createRouter } from 'remix/fetch-router'
- * import { prerender } from '@kuboon/remix-ssg'
+ * import { prerender } from '@kuboon/remix-ssg/node'
  *
  * let router = createRouter()
  * // ...map routes...

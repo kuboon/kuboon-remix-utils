@@ -5,7 +5,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import type { RouterLike } from './crawl.ts'
-import { prerender } from './prerender.ts'
+import { prerender, writeResult } from './prerender.ts'
 
 function makeRouter(pages: Record<string, { body: string; type?: string }>): RouterLike {
   return {
@@ -25,6 +25,18 @@ function makeRouter(pages: Record<string, { body: string; type?: string }>): Rou
 function tempDir(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), 'ssg-'))
 }
+
+describe('writeResult', () => {
+  it('skips 204 No Content responses', async () => {
+    let output = await writeResult('/tmp/unused-ssg-output', {
+      pathname: '/',
+      filepath: '/index.html',
+      response: new Response(null, { status: 204 }),
+    })
+
+    assert.equal(output, null)
+  })
+})
 
 describe('prerender', () => {
   it('writes crawled pages and assets, rewriting extensions and preserving hydration comments', async () => {
