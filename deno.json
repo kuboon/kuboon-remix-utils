@@ -1,5 +1,5 @@
 {
-  "workspace": ["./packages/data-table-sqlite-turso"],
+  "workspace": ["./packages/data-table-sqlite-turso", "./packages/ssg"],
   "fmt": {
     "singleQuote": true,
     "semiColons": false,

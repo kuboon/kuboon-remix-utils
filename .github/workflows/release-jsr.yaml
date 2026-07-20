@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'packages/data-table-sqlite-turso/**'
+      - 'packages/ssg/**'
       - '.github/workflows/release-jsr.yaml'
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -23,3 +24,11 @@ jobs:
     uses: kuboon/workflows/.github/workflows/release-jsr.yml@main
     with:
       directory: packages/data-table-sqlite-turso
+
+  ssg:
+    permissions:
+      contents: write # push the release tag
+      id-token: write # OIDC token used to authenticate with JSR
+    uses: kuboon/workflows/.github/workflows/release-jsr.yml@main
+    with:
+      directory: packages/ssg
