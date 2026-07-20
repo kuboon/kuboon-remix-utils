@@ -165,6 +165,12 @@
           "npm:@remix-run/assert@0.3",
           "npm:@remix-run/data-table@0.3"
         ]
+      },
+      "packages/ssg": {
+        "dependencies": [
+          "jsr:@std/testing@1",
+          "npm:@remix-run/assert@0.3"
+        ]
       }
     }
   }

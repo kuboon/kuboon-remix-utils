@@ -6,9 +6,10 @@ This is a [Deno workspace](https://docs.deno.com/runtime/fundamentals/workspaces
 
 ## Packages
 
-| Package                                                         | JSR                                                                                             | Description                                              |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL adapter for `@remix-run/data-table` |
+| Package                                                         | JSR                                                                                             | Description                                                 |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL adapter for `@remix-run/data-table`    |
+| [`ssg`](./packages/ssg)                                         | [`@kuboon/remix-ssg`](https://jsr.io/@kuboon/remix-ssg)                                         | Static site generation (prerender) for `remix/fetch-router` |
 
 ## Development
 
