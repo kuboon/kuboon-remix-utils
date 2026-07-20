@@ -1,0 +1,25 @@
+name: Release to JSR
+
+# Publishes each package to JSR via the shared reusable workflow when its source
+# changes on main. Authentication uses GitHub Actions OIDC, so no token is
+# required, but each JSR package must be linked to this repository at
+# https://jsr.io/<package>/publish for the OIDC publish to succeed.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/data-table-sqlite-turso/**'
+      - '.github/workflows/release-jsr.yaml'
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  data-table-sqlite-turso:
+    permissions:
+      contents: write # push the release tag
+      id-token: write # OIDC token used to authenticate with JSR
+    uses: kuboon/workflows/.github/workflows/release-jsr.yml@main
+    with:
+      directory: packages/data-table-sqlite-turso
