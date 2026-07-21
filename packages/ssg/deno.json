@@ -1,8 +1,11 @@
 {
   "name": "@kuboon/remix-ssg",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
+  },
   "imports": {
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd"

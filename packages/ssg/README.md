@@ -9,7 +9,7 @@ Static site generation (SSG) for [`remix/fetch-router`](https://github.com/remix
 - **Router-driven** — works with any `remix/fetch-router` router (or any `fetch`-shaped object); no framework lock-in
 - **Link-crawling** — seed a few paths and it discovers the rest by following rendered `<a>`/asset links (honoring `nofollow`)
 - **Hydration-safe** — preserves Remix UI hydration comment markers and rewrites TS/JSX asset extensions to `.js` for static hosting
-- **Zero dependencies** — pure Node build-time tool (`node:fs`), no runtime dependencies
+- **Runtime-agnostic core** — the main entry (`crawl`, `toOutput`, `rewriteExtensionsToJs`) depends only on web standards (`Request`/`Response`/`URL`); all filesystem writing lives in the optional `@kuboon/remix-ssg/node` subpath
 
 ## Installation
 
@@ -27,9 +27,11 @@ deno add jsr:@kuboon/remix-ssg
 
 ## Usage
 
+Batteries-included, writing to disk with Node's `fs` — import it from the `/node` subpath:
+
 ```ts
 import { createRouter } from 'remix/fetch-router'
-import { prerender } from '@kuboon/remix-ssg'
+import { prerender } from '@kuboon/remix-ssg/node'
 
 let router = createRouter()
 // ...map your routes (which render HTML via remix/ui/server)...
@@ -45,11 +47,43 @@ console.log(`Wrote ${stats.pages} pages and ${stats.assets} assets`)
 
 Output: each HTML page is written as `<pathname>/index.html` (clean URLs), and assets are written under their URL path with TS/JSX extensions rewritten to `.js`.
 
+### Runtime-agnostic (no Node)
+
+The main entry has no `node:*` imports. Crawl the router and transform each response into an
+`OutputFile` (`{ path, content }`) yourself, then write it with whatever your runtime provides:
+
+```ts
+import { crawl, toOutput } from '@kuboon/remix-ssg'
+
+for await (let result of crawl(router, { paths: ['/'] })) {
+  let file = await toOutput(result)
+  if (!file) continue // 204 No Content
+  // `file.path` is relative to the site root; `file.content` is a string or Uint8Array.
+  await myWriteFile(`build/site/${file.path}`, file.content)
+}
+```
+
 ## API
+
+### Main entry (`@kuboon/remix-ssg`) — no Node
+
+### `crawl(router, options): AsyncIterableIterator<CrawlResult>`
+
+The low-level spider. Drives `router.fetch()` from the seed paths, follows rendered links/assets, and yields `{ pathname, filepath, response }`.
+
+### `toOutput(result): Promise<OutputFile | null>`
+
+Transforms one `CrawlResult` into the `{ path, content }` to write (extensions rewritten, HTML/script/raw handled), or `null` for a `204`. The pure, filesystem-free half of writing a page.
+
+### `rewriteExtensionsToJs(html): string`
+
+Rewrites TS/JSX source extensions to `.js` in a rendered HTML document's asset references and inline hydration module URLs.
+
+### Node subpath (`@kuboon/remix-ssg/node`)
 
 ### `prerender(options): Promise<PrerenderStats>`
 
-Batteries-included generator. Options:
+Batteries-included, writes to disk. Options:
 
 - `router` — the router (or `fetch`-shaped object) to render (required)
 - `outDir` — directory to write the static site into (required)
@@ -62,13 +96,9 @@ Batteries-included generator. Options:
 
 Returns `{ pages, assets, files }`.
 
-### `crawl(router, options): AsyncIterableIterator<CrawlResult>`
+### `writeResult(outDir, result): Promise<string | null>`
 
-The low-level spider, for custom output handling. Yields `{ pathname, filepath, response }`.
-
-### `writeResult(outDir, result)` / `rewriteExtensionsToJs(html)`
-
-The disk-writing and static-HTML-rewriting helpers used by `prerender`.
+Writes one `CrawlResult` to disk under `outDir` (the Node-specific half of `toOutput`), returning the absolute path written or `null` when skipped.
 
 ## Related Packages
 

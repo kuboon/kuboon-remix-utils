@@ -1,5 +1,3 @@
-import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
 import { parse } from './html-parser.ts'
 import type { CrawlResult } from './crawl.ts'
 
@@ -8,44 +6,54 @@ const SCRIPT_EXT_IN_PATH = /\.(?:tsx?|jsx|mts)(?=[?#]|$)/
 const SCRIPT_EXT_IN_JS_IMPORT = /\.(?:tsx?|jsx|mts)(?=["'?#])/g
 
 /**
- * Writes one {@link CrawlResult} to disk under `outputDir`.
+ * A single file to write, produced from a {@link CrawlResult}.
  *
- * HTML responses are written with script/style references rewritten from TS/JSX source extensions to
- * `.js` for static hosting; script responses are written as `.js` with their import specifiers
- * rewritten; everything else is written as raw bytes. A `204 No Content` response is skipped.
- * @param outputDir Directory to write into.
- * @param result The crawl result to write.
- * @returns The absolute output path written, or `null` when the response was skipped.
+ * `path` is the output path relative to the site root; HTML pages map to `<pathname>/index.html`
+ * and script sources have their extension rewritten to `.js`. `content` is the finished body,
+ * ready to write verbatim: a string for HTML/script responses (extensions rewritten) or raw
+ * `Uint8Array` bytes for everything else.
  */
-export async function writeResult(outputDir: string, result: CrawlResult): Promise<string | null> {
+export interface OutputFile {
+  /** Output path relative to the site root (e.g. `about/index.html`, `entry.js`). */
+  path: string
+  /** The finished file body to write as-is. */
+  content: string | Uint8Array
+}
+
+/**
+ * Transforms one {@link CrawlResult} into the {@link OutputFile} to write — the pure, runtime-free
+ * half of writing a static site (no filesystem access).
+ *
+ * HTML responses get their script/style references rewritten from TS/JSX source extensions to `.js`
+ * for static hosting; script responses are returned as `.js` with their import specifiers rewritten;
+ * everything else is returned as raw bytes. A `204 No Content` response yields `null`.
+ * @param result The crawl result to transform.
+ * @returns The file to write, or `null` when the response should be skipped.
+ */
+export async function toOutput(result: CrawlResult): Promise<OutputFile | null> {
   let { filepath, response } = result
 
   if (response.status === 204) {
     return null
   }
 
-  let outputFilepath = SCRIPT_FILE_EXT.test(filepath)
-    ? filepath.replace(SCRIPT_FILE_EXT, '.js')
-    : filepath
-  let outputPath = path.join(outputDir, outputFilepath)
-  await fs.mkdir(path.dirname(outputPath), { recursive: true })
+  let path = SCRIPT_FILE_EXT.test(filepath) ? filepath.replace(SCRIPT_FILE_EXT, '.js') : filepath
 
   let contentType = response.headers.get('Content-Type')
 
   if (contentType?.includes('text/html')) {
     let html = await response.text()
     // Update script references for static HTML hosting.
-    let updated = rewriteExtensionsToJs(html)
-    await fs.writeFile(outputPath, updated, 'utf-8')
-  } else if (SCRIPT_FILE_EXT.test(filepath)) {
-    let content = await response.text()
-    // Write all script files to disk as JS files
-    await fs.writeFile(outputPath, content.replace(SCRIPT_EXT_IN_JS_IMPORT, '.js'), 'utf-8')
-  } else {
-    await fs.writeFile(outputPath, new Uint8Array(await response.arrayBuffer()))
+    return { path, content: rewriteExtensionsToJs(html) }
   }
 
-  return outputPath
+  if (SCRIPT_FILE_EXT.test(filepath)) {
+    let content = await response.text()
+    // Rewrite import specifiers so the emitted `.js` files resolve one another.
+    return { path, content: content.replace(SCRIPT_EXT_IN_JS_IMPORT, '.js') }
+  }
+
+  return { path, content: new Uint8Array(await response.arrayBuffer()) }
 }
 
 /**
