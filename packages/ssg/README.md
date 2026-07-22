@@ -71,6 +71,28 @@ for await (let result of crawl(router, { paths: ['/'] })) {
 
 The low-level spider. Drives `router.fetch()` from the seed paths, follows rendered links/assets, and yields `{ pathname, filepath, response }`.
 
+By default a page that responds non-OK aborts the crawl with a `CrawlError`. The error carries structured `failures` — `{ pathname, status, statusText, referrer }`, where `referrer` is the page whose HTML linked to the broken path — so you can see _which page_ produced the bad link instead of parsing a message string. Pass `onError` to keep crawling past broken links:
+
+```ts
+import { crawl, CrawlError } from '@kuboon/remix-ssg'
+
+let broken: CrawlFailure[] = []
+for await (
+  let result of crawl(router, {
+    paths: ['/'],
+    onError: (failure) => {
+      broken.push(failure) // { pathname, status, referrer }
+      return 'skip' // keep crawling; or 'throw' to abort here
+    },
+  })
+) {
+  // …write result…
+}
+if (broken.length) console.warn(`${broken.length} broken link(s)`, broken)
+```
+
+`onError` accepts `'throw'` (default), `'skip'`, or a function returning either.
+
 ### `toOutput(result): Promise<OutputFile | null>`
 
 Transforms one `CrawlResult` into the `{ path, content }` to write (extensions rewritten, HTML/script/raw handled), or `null` for a `204`. The pure, filesystem-free half of writing a page.
@@ -92,6 +114,7 @@ Batteries-included, writes to disk. Options:
 - `spider` — follow links found in rendered HTML (default `true`)
 - `concurrency` — concurrent in-flight requests (default `1`)
 - `ignorePageNofollow(pathname)` — crawl a page's links even when it is marked `nofollow`
+- `onError` — how to handle a non-OK page: `'throw'` (default), `'skip'`, or a function returning either (see `crawl` above)
 - `onResult(result, outputPath)` — called after each result is written
 
 Returns `{ pages, assets, files }`.

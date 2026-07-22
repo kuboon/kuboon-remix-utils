@@ -26,6 +26,55 @@ export interface CrawlResult {
 }
 
 /**
+ * A page that responded non-OK during the crawl.
+ */
+export interface CrawlFailure {
+  /** The request pathname that failed. */
+  pathname: string
+  /** The HTTP status code of the response. */
+  status: number
+  /** The HTTP status text of the response (may be empty). */
+  statusText: string
+  /** The page whose HTML linked to `pathname`, or `undefined` for a seed path. */
+  referrer?: string
+}
+
+/**
+ * How the crawler should react to a page that responds non-OK:
+ * - `'throw'` — abort the crawl, throwing a {@link CrawlError} (the default).
+ * - `'skip'` — drop the page and keep crawling.
+ * - a function — called per failure; return `'throw'` or `'skip'` to decide. Use
+ *   the function form to observe/collect broken links (e.g. to log them and fail
+ *   the build yourself afterwards).
+ */
+export type CrawlErrorHandler =
+  | 'throw'
+  | 'skip'
+  | ((failure: CrawlFailure) => 'throw' | 'skip')
+
+/**
+ * Thrown by {@link crawl} when a page responds non-OK and the error is not
+ * skipped. Carries the structured {@link CrawlFailure}s so callers can inspect
+ * the status, pathname, and referring page instead of parsing a message string.
+ */
+export class CrawlError extends Error {
+  readonly failures: CrawlFailure[]
+  constructor(failures: CrawlFailure[]) {
+    super(CrawlError.format(failures))
+    this.name = 'CrawlError'
+    this.failures = failures
+  }
+  private static format(failures: CrawlFailure[]): string {
+    return failures
+      .map((f) => {
+        let from = f.referrer ? ` — linked from ${f.referrer}` : ''
+        return `Crawl failed: ${f.status} ${f.statusText} (${f.pathname})${from}`
+      })
+      .join('\n')
+  }
+}
+
+/**
  * Options controlling {@link crawl}.
  */
 export interface CrawlOptions {
@@ -37,6 +86,12 @@ export interface CrawlOptions {
   concurrency?: number
   /** Return `true` to crawl a page's links even when it is marked `nofollow`. */
   ignorePageNofollow?: (pathname: string) => boolean
+  /**
+   * How to handle a page that responds non-OK. Defaults to `'throw'`, which
+   * aborts the crawl with a {@link CrawlError}. Pass `'skip'` or a function to
+   * keep crawling past broken links. See {@link CrawlErrorHandler}.
+   */
+  onError?: CrawlErrorHandler
 }
 
 /**
@@ -51,9 +106,20 @@ export async function* crawl(
   router: RouterLike,
   options: CrawlOptions = {},
 ): AsyncIterableIterator<CrawlResult> {
-  let { paths = ['/'], spider = true, concurrency = 1, ignorePageNofollow } = options
+  let {
+    paths = ['/'],
+    spider = true,
+    concurrency = 1,
+    ignorePageNofollow,
+    onError = 'throw',
+  } = options
 
-  let queue: string[] = []
+  interface QueueItem {
+    pathname: string
+    referrer?: string
+  }
+
+  let queue: QueueItem[] = []
   let visited = new Set<string>()
   let results: CrawlResult[] = []
   let active = 0
@@ -84,22 +150,30 @@ export async function* crawl(
     await gate
   }
 
-  function enqueue(pathnames: string[]) {
+  function enqueue(pathnames: string[], referrer?: string) {
     pathnames.forEach((p) => {
       if (!visited.has(p)) {
         visited.add(p)
-        queue.push(p)
+        queue.push({ pathname: p, referrer })
       }
     })
   }
 
-  async function fetchOne(pathname: string) {
+  async function fetchOne({ pathname, referrer }: QueueItem) {
     active++
     try {
       let response = await router.fetch(new Request(`${BASE_URL}${pathname}`))
 
       if (!response.ok) {
-        throw new Error(`Crawl failed: ${response.status} ${response.statusText} (${pathname})`)
+        let failure: CrawlFailure = {
+          pathname,
+          status: response.status,
+          statusText: response.statusText,
+          referrer,
+        }
+        let decision = typeof onError === 'function' ? onError(failure) : onError
+        if (decision === 'skip') return
+        throw new CrawlError([failure])
       }
 
       let isHtml = response.headers.get('Content-Type')?.includes('text/html')
@@ -114,10 +188,10 @@ export async function* crawl(
 
         let dom = parse(await cloned.text())
 
-        enqueue(extractAssetPaths(dom.elements, pathname))
+        enqueue(extractAssetPaths(dom.elements, pathname), pathname)
 
         if (spider && (ignorePageNofollow?.(pathname) || shouldCrawlLinks(dom.elements))) {
-          enqueue(extractLinkPaths(dom.elements, pathname))
+          enqueue(extractLinkPaths(dom.elements, pathname), pathname)
         }
       } else {
         results.push({ pathname, filepath: pathname, response })

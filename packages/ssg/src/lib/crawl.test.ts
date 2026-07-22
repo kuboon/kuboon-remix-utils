@@ -1,8 +1,8 @@
 import * as assert from '@remix-run/assert'
 import { describe, it } from '@std/testing/bdd'
 
-import { crawl } from './crawl.ts'
-import type { CrawlResult, RouterLike } from './crawl.ts'
+import { crawl, CrawlError } from './crawl.ts'
+import type { CrawlFailure, CrawlResult, RouterLike } from './crawl.ts'
 
 function makeRouter(pages: Record<string, { body: string; type?: string }>): RouterLike {
   return {
@@ -107,5 +107,57 @@ describe('crawl', () => {
     let router = makeRouter({ '/': { body: '<a href="/missing">x</a>' } })
 
     await assert.rejects(() => collect(crawl(router, { paths: ['/'] })), /Crawl failed: 404/)
+  })
+
+  it('throws a CrawlError carrying the failure and its referrer', async () => {
+    let router = makeRouter({ '/': { body: '<a href="/missing">x</a>' } })
+
+    let err: unknown
+    try {
+      await collect(crawl(router, { paths: ['/'] }))
+    } catch (e) {
+      err = e
+    }
+
+    assert.ok(err instanceof CrawlError)
+    assert.equal((err as CrawlError).failures.length, 1)
+    let [failure] = (err as CrawlError).failures
+    assert.equal(failure.pathname, '/missing')
+    assert.equal(failure.status, 404)
+    assert.equal(failure.referrer, '/')
+  })
+
+  it('skips broken links and keeps crawling when onError is "skip"', async () => {
+    let router = makeRouter({
+      '/': { body: '<a href="/missing">x</a><a href="/ok">y</a>' },
+      '/ok': { body: 'ok' },
+    })
+
+    let results = await collect(crawl(router, { paths: ['/'], onError: 'skip' }))
+
+    assert.deepEqual(results.map((r) => r.pathname).sort(), ['/', '/ok'])
+  })
+
+  it('reports each failure to an onError function and honours its decision', async () => {
+    let router = makeRouter({
+      '/': { body: '<a href="/missing">x</a><a href="/ok">y</a>' },
+      '/ok': { body: 'ok' },
+    })
+
+    let seen: CrawlFailure[] = []
+    let results = await collect(
+      crawl(router, {
+        paths: ['/'],
+        onError: (f) => {
+          seen.push(f)
+          return 'skip'
+        },
+      }),
+    )
+
+    assert.deepEqual(results.map((r) => r.pathname).sort(), ['/', '/ok'])
+    assert.equal(seen.length, 1)
+    assert.equal(seen[0].pathname, '/missing')
+    assert.equal(seen[0].referrer, '/')
   })
 })
