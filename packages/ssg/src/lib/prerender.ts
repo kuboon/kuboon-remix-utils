@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { crawl } from './crawl.ts'
-import type { CrawlResult, RouterLike } from './crawl.ts'
+import type { CrawlErrorHandler, CrawlResult, RouterLike } from './crawl.ts'
 import { toOutput } from './output.ts'
 
 /**
@@ -45,6 +45,11 @@ export interface PrerenderOptions {
   concurrency?: number
   /** Return `true` to crawl a page's links even when it is marked `nofollow`. */
   ignorePageNofollow?: (pathname: string) => boolean
+  /**
+   * How to handle a page that responds non-OK during the crawl. Defaults to
+   * `'throw'`. Pass `'skip'` or a function to keep going past broken links.
+   */
+  onError?: CrawlErrorHandler
   /** Called after each result is written (`outputPath` is `null` when the response was skipped). */
   onResult?: (result: CrawlResult, outputPath: string | null) => void
 }
@@ -87,6 +92,7 @@ export async function prerender(options: PrerenderOptions): Promise<PrerenderSta
     spider,
     concurrency,
     ignorePageNofollow,
+    onError,
     onResult,
   } = options
 
@@ -102,6 +108,7 @@ export async function prerender(options: PrerenderOptions): Promise<PrerenderSta
       spider,
       concurrency,
       ignorePageNofollow,
+      onError,
     })
   ) {
     let outputPath = await writeResult(outDir, result)
