@@ -9,6 +9,7 @@ This is a [Deno workspace](https://docs.deno.com/runtime/fundamentals/workspaces
 | Package                                                         | JSR                                                                                             | Description                                                 |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL adapter for `@remix-run/data-table`    |
+| [`mcp`](./packages/mcp)                                         | [`@kuboon/remix-mcp`](https://jsr.io/@kuboon/remix-mcp)                                         | Serve an MCP server from a `remix/fetch-router` route       |
 | [`ssg`](./packages/ssg)                                         | [`@kuboon/remix-ssg`](https://jsr.io/@kuboon/remix-ssg)                                         | Static site generation (prerender) for `remix/fetch-router` |
 
 ## Development
