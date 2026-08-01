@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'packages/data-table-sqlite-turso/**'
+      - 'packages/mcp/**'
       - 'packages/ssg/**'
       - '.github/workflows/release-jsr.yaml'
 
@@ -24,6 +25,14 @@ jobs:
     uses: kuboon/workflows/.github/workflows/release-jsr.yml@main
     with:
       directory: packages/data-table-sqlite-turso
+
+  mcp:
+    permissions:
+      contents: write # push the release tag
+      id-token: write # OIDC token used to authenticate with JSR
+    uses: kuboon/workflows/.github/workflows/release-jsr.yml@main
+    with:
+      directory: packages/mcp
 
   ssg:
     permissions:

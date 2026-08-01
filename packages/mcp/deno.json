@@ -1,0 +1,20 @@
+{
+  "name": "@kuboon/remix-mcp",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "imports": {
+    "@modelcontextprotocol/server": "npm:@modelcontextprotocol/server@^2.0.0",
+    "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
+    "@remix-run/fetch-router": "npm:@remix-run/fetch-router@^0.20.1",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd"
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-write --allow-env",
+    "check": "deno check src"
+  },
+  "publish": {
+    "include": ["src", "README.md", "LICENSE", "deno.json"],
+    "exclude": ["**/*.test.ts"]
+  }
+}
