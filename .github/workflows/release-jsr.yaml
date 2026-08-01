@@ -10,6 +10,7 @@ on:
     branches:
       - main
     paths:
+      - 'packages/assets-deno/**'
       - 'packages/data-table-sqlite-turso/**'
       - 'packages/mcp/**'
       - 'packages/ssg/**'
@@ -18,6 +19,14 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
+  assets-deno:
+    permissions:
+      contents: write # push the release tag
+      id-token: write # OIDC token used to authenticate with JSR
+    uses: kuboon/workflows/.github/workflows/release-jsr.yml@main
+    with:
+      directory: packages/assets-deno
+
   data-table-sqlite-turso:
     permissions:
       contents: write # push the release tag
