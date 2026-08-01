@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@std/encoding": "jsr:@std/encoding@^1",
+    "@std/encoding/": "jsr:/@std/encoding@^1/"
+  }
+}

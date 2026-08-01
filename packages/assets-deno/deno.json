@@ -1,0 +1,29 @@
+{
+  "name": "@kuboon/remix-assets-deno",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "imports": {
+    "@deno/emit": "jsr:@deno/emit@^0.46.0",
+    "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
+    "@std/encoding": "jsr:@std/encoding@^1",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+    "es-module-lexer": "npm:es-module-lexer@^1.7.0"
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-write --allow-env --allow-run --allow-net",
+    "check": "deno check src"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "README.md",
+      "LICENSE",
+      "deno.json"
+    ],
+    "exclude": [
+      "**/*.test.ts",
+      "**/__fixtures__"
+    ]
+  }
+}

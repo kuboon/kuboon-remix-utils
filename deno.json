@@ -1,5 +1,10 @@
 {
-  "workspace": ["./packages/data-table-sqlite-turso", "./packages/mcp", "./packages/ssg"],
+  "workspace": [
+    "./packages/assets-deno",
+    "./packages/data-table-sqlite-turso",
+    "./packages/mcp",
+    "./packages/ssg"
+  ],
   "fmt": {
     "singleQuote": true,
     "semiColons": false,
@@ -8,11 +13,14 @@
   },
   "lint": {
     "rules": {
-      "exclude": ["prefer-const", "require-await"]
+      "exclude": [
+        "prefer-const",
+        "require-await"
+      ]
     }
   },
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-env",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-run --allow-net",
     "check": "deno check packages/*/src"
   }
 }
