@@ -10,7 +10,7 @@ function createFixtureServer(): Promise<DenoAssetServer> {
   return createAssetServer({
     rootDir: fixtureDir,
     entrypoints: ['entry_a.ts', 'entry_b.ts'],
-    importMap: 'import_map.json',
+    configPath: 'import_map.json',
   })
 }
 
@@ -148,7 +148,7 @@ describe('createAssetServer', () => {
     let server = await createAssetServer({
       rootDir: fixtureDir,
       entrypoints: ['entry_b.ts'],
-      importMap: 'import_map.json',
+      configPath: 'import_map.json',
       basePath: '/static',
     })
 
