@@ -5,3 +5,11 @@ export type { LoadedModule, LoadModuleGraphOptions, ModuleGraph } from './lib/lo
 export { candidatePathFor, PathRegistry } from './lib/paths.ts'
 export { rewriteImports } from './lib/rewrite.ts'
 export type { SpecifierResolver } from './lib/rewrite.ts'
+export {
+  collectRequires,
+  detectNamedExports,
+  initCommonJsLexer,
+  isCommonJs,
+  wrapCommonJs,
+} from './lib/cjs.ts'
+export type { WrapCommonJsOptions } from './lib/cjs.ts'

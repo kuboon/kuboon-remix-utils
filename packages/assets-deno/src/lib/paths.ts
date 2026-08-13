@@ -7,8 +7,14 @@
  * path, and no two specifiers may collide onto one path.
  */
 
-/** Source extensions rewritten to `.js`, since that is what the server emits. */
-const COMPILED_EXTENSIONS = ['.tsx', '.ts', '.mts', '.jsx', '.mjs']
+/**
+ * Source extensions rewritten to `.js`, since that is what the server emits.
+ *
+ * `.cjs` and `.cts` are in here for a reason beyond tidiness: a CommonJS module is served *wrapped
+ * as an ES module*, so a URL still ending in `.cjs` would advertise a format the body no longer has,
+ * and a client that trusts the extension rejects it.
+ */
+const COMPILED_EXTENSIONS = ['.tsx', '.ts', '.mts', '.cts', '.jsx', '.mjs', '.cjs']
 
 /**
  * A two-way map between resolved specifiers and the public paths they are served at.

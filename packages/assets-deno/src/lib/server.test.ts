@@ -162,3 +162,80 @@ describe('createAssetServer', () => {
     assert.throws(() => server.entryUrl('nope.ts'))
   })
 })
+
+describe('createAssetServer with CommonJS', () => {
+  function createCjsServer(): Promise<DenoAssetServer> {
+    return createAssetServer({
+      rootDir: fixtureDir,
+      entrypoints: ['entry_cjs.ts'],
+      configPath: 'import_map.json',
+    })
+  }
+
+  it('serves a CommonJS module as an ES module rather than refusing it', async () => {
+    let server = await createCjsServer()
+
+    let url = [...server.moduleUrls()].find(([s]) => s.endsWith('legacy.cjs'))?.[1]
+    assert.ok(url !== undefined, 'the CommonJS module is in the served graph')
+
+    let code = await fetchText(server, url)
+    assert.ok(code.includes('export default'), 'the wrapped module has a default export')
+    // The body still says `module.exports` — correctly, inside the wrapper — so the meaningful
+    // check is that the wrapper supplying `module` is there at all.
+    assert.ok(
+      code.includes('const __cjs_module = { exports: {} }'),
+      'the body is given the module object it expects',
+    )
+  })
+
+  it('serves it under a .js URL, since the body is now an ES module', async () => {
+    let server = await createCjsServer()
+
+    let url = [...server.moduleUrls()].find(([s]) => s.endsWith('legacy.cjs'))?.[1]
+    assert.ok(url?.endsWith('.js'), `expected a .js URL, got ${url}`)
+  })
+
+  it('points the importing module at that URL', async () => {
+    let server = await createCjsServer()
+
+    let entry = await fetchText(server, server.entryUrl('entry_cjs.ts'))
+
+    assert.ok(!entry.includes('./legacy.cjs'), 'the authored .cjs specifier is gone')
+    assert.ok(entry.includes('/assets/app/legacy.js'), 'replaced by the served URL')
+  })
+
+  it('re-exports the names the CommonJS module assigns', async () => {
+    let server = await createCjsServer()
+
+    let url = [...server.moduleUrls()].find(([s]) => s.endsWith('legacy.cjs'))?.[1]
+    let code = await fetchText(server, url!)
+
+    assert.ok(code.includes('export const greet'), 'exports greet by name')
+    assert.ok(code.includes('export const VERSION'), 'exports VERSION by name')
+  })
+
+  it('follows require() into further CommonJS modules', async () => {
+    let server = await createCjsServer()
+
+    let served = [...server.moduleUrls()].map(([specifier]) => specifier)
+    assert.ok(
+      served.some((specifier) => specifier.endsWith('shared_cjs.cjs')),
+      'the required module is part of the graph',
+    )
+  })
+
+  it('emits a wrapped module that actually runs', async () => {
+    let server = await createCjsServer()
+
+    // shared_cjs.cjs requires nothing, so it can be evaluated standalone here. Everything the
+    // wrapper provides — module, exports, the named re-export — has to work for this to pass.
+    let url = [...server.moduleUrls()].find(([s]) => s.endsWith('shared_cjs.cjs'))?.[1]
+    let code = await fetchText(server, url!)
+
+    let mod = await import(`data:text/javascript,${encodeURIComponent(code)}`)
+
+    assert.equal(typeof mod.default.counter.next, 'function')
+    assert.equal(mod.default.counter.next(), 1)
+    assert.equal(mod.counter, mod.default.counter, 'the named export is the same object')
+  })
+})
