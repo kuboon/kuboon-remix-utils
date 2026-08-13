@@ -12,14 +12,26 @@
 import { RequestedModuleType, ResolutionMode, Workspace } from '@deno/loader'
 import { init, parse } from 'es-module-lexer'
 
+import { collectRequires, detectNamedExports, initCommonJsLexer, isCommonJs } from './cjs.ts'
+
 /** One module, loaded and transpiled, with its imports resolved. */
 export interface LoadedModule {
   /** The resolved specifier this module is keyed by. */
   specifier: string
-  /** The transpiled JavaScript. */
+  /** The transpiled JavaScript. For a CommonJS module this is the unwrapped body. */
   code: string
-  /** Authored specifier -> resolved specifier, for every import that resolved. */
+  /**
+   * Authored specifier -> resolved specifier, for every import that resolved. For a CommonJS
+   * module these are its `require()` specifiers.
+   */
   dependencies: Map<string, string>
+  /**
+   * Whether this module is CommonJS and must be wrapped as an ES module before a browser can load
+   * it. Browsers run ES modules only, so an unwrapped body would fail on `module is not defined`.
+   */
+  commonJs: boolean
+  /** Names to re-export individually when wrapping, so `import { x } from …` keeps working. */
+  namedExports: string[]
 }
 
 /** Every module reachable from the entrypoints. */
@@ -74,6 +86,7 @@ export async function loadModuleGraph(
   options: LoadModuleGraphOptions = {},
 ): Promise<ModuleGraph> {
   await initLexer()
+  await initCommonJsLexer()
 
   using workspace = new Workspace({
     configPath: options.configPath,
@@ -131,11 +144,26 @@ async function walk(
     return
   }
 
-  let module: LoadedModule = { specifier, code, dependencies: new Map() }
+  let esmSpecifiers = staticSpecifiers(code)
+  let commonJs = isCommonJs(code, esmSpecifiers.length > 0)
+
+  let module: LoadedModule = {
+    specifier,
+    code,
+    dependencies: new Map(),
+    commonJs,
+    namedExports: commonJs ? detectNamedExports(code) : [],
+  }
+  // Recorded before recursing so an import cycle terminates.
   modules.set(specifier, module)
 
-  for (let authored of staticSpecifiers(code)) {
-    let resolved = resolveSpecifier(loader, authored, specifier)
+  // A CJS module's dependencies are its `require()` calls, and they resolve under Node's require
+  // semantics rather than ESM's — extensionless and directory specifiers only work that way.
+  let authoredSpecifiers = commonJs ? collectRequires(code) : esmSpecifiers
+  let mode = commonJs ? ResolutionMode.Require : ResolutionMode.Import
+
+  for (let authored of authoredSpecifiers) {
+    let resolved = resolveSpecifier(loader, authored, specifier, mode)
     if (resolved === null) continue
 
     module.dependencies.set(authored, resolved)
@@ -173,9 +201,10 @@ function resolveSpecifier(
   loader: LoaderLike,
   specifier: string,
   referrer: string | undefined,
+  mode: ResolutionMode = ResolutionMode.Import,
 ): string | null {
   try {
-    return loader.resolveSync(specifier, referrer, ResolutionMode.Import)
+    return loader.resolveSync(specifier, referrer, mode)
   } catch {
     return null
   }

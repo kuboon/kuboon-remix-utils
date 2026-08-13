@@ -20,6 +20,7 @@ This server does not bundle. Every module gets exactly one URL, so all three ent
 - **JSR + npm + import maps** — resolution comes from `@deno/loader`, not a reimplementation
 - **True module identity** — one resolved specifier, one URL, one instance
 - **No bundling, no build step, no subprocess** — compile in-process on startup, serve from memory
+- **CommonJS interop** — CJS dependencies are wrapped as ES modules instead of being refused
 - **Runtime graph only** — type-only modules are never served, because they do not exist at runtime
 - **Readable URLs** — `/assets/app/client/session.js`, `/assets/jsr/@kuboon/dpop/0.1.2/client/mod.js`
 - **Conditional requests** — `ETag` + `304`, so reloads are cheap
@@ -57,6 +58,36 @@ Run with `--allow-read --allow-env --allow-net`. `--allow-net` is only needed wh
 Your `deno.json`'s `compilerOptions` are honored, so a JSX config like
 `{ "jsx": "react-jsx", "jsxImportSource": "@remix-run/ui" }` needs no repeating here.
 
+### CommonJS dependencies
+
+Browsers run ES modules only, so a CommonJS file cannot be served as-is — `module` is not defined,
+and an importer asking for a default export finds none. `@remix-run/assets` refuses such a module
+outright (`COMMONJS_NOT_SUPPORTED`).
+
+Here CJS is wrapped as an ES module, the way esbuild and Vite do:
+
+```js
+import __cjs_dep_0 from '/assets/npm/ms/index.js' // each require(), hoisted
+const __cjs_module = { exports: {} }
+;(function (exports, require, module, __filename, __dirname) {
+  /* the original CommonJS body */
+}).call(__cjs_module.exports, __cjs_module.exports, __cjs_require, __cjs_module, '…', '…')
+export default __cjs_module.exports
+export const greet = __cjs_module.exports.greet // each detected named export
+```
+
+Two details beyond the bare `module`/`exports` shim are what make this work on real packages.
+`require()` calls with a literal specifier are hoisted to real imports and resolved under Node's
+require semantics, so a package like `debug` — which does `require('./common')` — loads. And the
+names the module assigns are detected with `cjs-module-lexer` and re-exported individually, so
+`import { greet } from …` keeps working instead of only `import greet from …`.
+
+Because the served body is an ES module, its URL ends in `.js` even when the source was `.cjs`.
+
+What is _not_ handled: `require(someVariable)` cannot be resolved ahead of time and throws at
+runtime; Node globals such as `process` and `Buffer` are not shimmed; and a CJS import cycle
+resolves in ESM order rather than CommonJS's partially-filled-exports order.
+
 ### Deleting the globalThis singleton workaround
 
 With one URL per module, module-level state is genuinely shared:
@@ -90,7 +121,7 @@ The returned server has `fetch(request)`, `entryUrl(entrypoint)`, `moduleUrls()`
 
 ## Scope
 
-Deliberately not covered in `0.1.0`: CSS and other non-script assets, fingerprinted URLs, file watching, source maps, and minification. Scripts and their transitive graph only. Compilation happens once at startup; call `reload()` after sources change.
+Deliberately not covered: CSS and other non-script assets, fingerprinted URLs, file watching, source maps, and minification. Scripts and their transitive graph only. Compilation happens once at startup; call `reload()` after sources change.
 
 Dynamic `import()` is rewritten only when its argument is a string literal — there is nothing to resolve at build time otherwise.
 

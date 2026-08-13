@@ -10,6 +10,7 @@
 
 import * as path from 'node:path'
 
+import { wrapCommonJs } from './cjs.ts'
 import { loadModuleGraph } from './loader.ts'
 import type { LoadModuleGraphOptions } from './loader.ts'
 import { candidatePathFor, PathRegistry } from './paths.ts'
@@ -213,10 +214,30 @@ async function build(
   // Pass 2: emit each module with its imports pointing at the URLs assigned above.
   let modules = new Map<string, ServedModule>()
   for (let module of graph.modules.values()) {
-    let code = await rewriteImports(module.code, (specifier) => {
+    let urlFor = (specifier: string): string | null => {
       let resolved = module.dependencies.get(specifier)
       return resolved === undefined ? null : registry.pathFor(resolved) ?? null
-    })
+    }
+
+    let code
+    if (module.commonJs) {
+      // A CJS body is not valid in a browser at all, so it is wrapped rather than rewritten: its
+      // `require()` targets become real imports and its exports are re-published as ESM.
+      let imports = new Map<string, string>()
+      for (let specifier of module.dependencies.keys()) {
+        let url = urlFor(specifier)
+        if (url !== null) imports.set(specifier, url)
+      }
+
+      code = wrapCommonJs(module.code, {
+        imports,
+        namedExports: module.namedExports,
+        filename: filenameOf(module.specifier),
+        dirname: dirnameOf(module.specifier),
+      })
+    } else {
+      code = await rewriteImports(module.code, urlFor)
+    }
 
     modules.set(module.specifier, { code, etag: await etagFor(code) })
   }
@@ -236,6 +257,20 @@ async function build(
   }
 
   return { registry, modules, entryUrls }
+}
+
+/** The `__filename` a wrapped CJS module sees. Informational only — nothing reads the disk. */
+function filenameOf(specifier: string): string {
+  return specifier.startsWith('file://')
+    ? decodeURIComponent(new URL(specifier).pathname)
+    : specifier
+}
+
+/** The `__dirname` a wrapped CJS module sees. */
+function dirnameOf(specifier: string): string {
+  let filename = filenameOf(specifier)
+  let index = filename.lastIndexOf('/')
+  return index <= 0 ? '/' : filename.slice(0, index)
 }
 
 function toFileUrl(entrypoint: string, rootDir: string): string {

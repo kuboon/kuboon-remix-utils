@@ -2,6 +2,13 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.3.0
+
+- CommonJS dependencies are now served instead of silently emitting a body no browser can run. A CJS module is wrapped as an ES module — its `require()` calls with literal specifiers hoisted to real imports and resolved under Node's require semantics, its body run with `module`, `exports`, `require`, `__filename`, `__dirname`, and `this` bound to `module.exports`, and its exports re-published as a default export plus one named export per name `cjs-module-lexer` detects.
+- **Breaking:** a module whose source is `.cjs` or `.cts` is now served under a `.js` URL. The served body is an ES module, so a URL still claiming `.cjs` advertises a format the content does not have, and a client that trusts the extension rejects it.
+- **Breaking:** `LoadedModule` gains `commonJs` and `namedExports`.
+- What CommonJS interop does not cover: `require(someVariable)` throws at runtime rather than resolving, Node globals such as `process` and `Buffer` are not shimmed, and a CJS import cycle resolves in ESM order.
+
 ## 0.2.0
 
 - Resolution, loading, and TypeScript/JSX transpilation now come from [`@deno/loader`](https://jsr.io/@deno/loader) instead of a `deno info --json` subprocess. Everything runs in-process, so **`--allow-run` is no longer required** — `--allow-read`, `--allow-env`, and `--allow-net` are enough. The `@deno/emit` dependency is gone too, since the loader returns modules already transpiled, and npm no longer needs a separate `createRequire` walk: one resolver now handles JSR, npm, import-map, and relative specifiers alike.
