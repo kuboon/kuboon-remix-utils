@@ -88,16 +88,15 @@ export class PathRegistry {
  *
  * @param specifier The resolved specifier
  * @param options.rootDir Absolute directory that `file:` modules are made relative to
- * @param options.npmRoots Package id keyed by the package root path on disk, for npm files
  * @returns A path relative to the base path, with no leading slash
  */
 export function candidatePathFor(
   specifier: string,
-  options: { rootDir?: string; npmRoots?: ReadonlyMap<string, string> } = {},
+  options: { rootDir?: string } = {},
 ): string {
   if (specifier.startsWith('file://')) {
     let filePath = fileUrlToPath(specifier)
-    let npmPath = npmRelativePath(filePath, options.npmRoots)
+    let npmPath = npmRelativePath(filePath)
     if (npmPath) return npmPath
 
     let rootDir = options.rootDir
@@ -147,26 +146,25 @@ export function fileUrlToPath(specifier: string): string {
   }
 }
 
-function npmRelativePath(
-  filePath: string,
-  npmRoots: ReadonlyMap<string, string> | undefined,
-): string | null {
-  if (!npmRoots) return null
+const NODE_MODULES = '/node_modules/'
 
-  // Longest match wins: a nested `node_modules` copy is a different package from its parent, and
-  // collapsing the two would break the one-specifier-one-URL rule.
-  let bestRoot = ''
-  let bestId = ''
-  for (let [root, id] of npmRoots) {
-    if (root.length > bestRoot.length && isInside(filePath, root)) {
-      bestRoot = root
-      bestId = id
-    }
-  }
+/**
+ * Names a file inside `node_modules` by its package-relative path.
+ *
+ * The *last* `node_modules` segment wins, which is what makes a nested copy read as the package it
+ * actually is (`.../a/node_modules/b/index.js` is `b`, not `a`). Deno's layout puts the real files
+ * under `node_modules/.deno/<pkg>@<version>/node_modules/<name>/…`, so this yields a clean
+ * `npm/<name>/…`. Two versions of one package therefore propose the same path; {@link PathRegistry}
+ * resolves that collision, so distinct modules still get distinct URLs.
+ */
+function npmRelativePath(filePath: string): string | null {
+  let index = filePath.lastIndexOf(NODE_MODULES)
+  if (index === -1) return null
 
-  if (bestRoot === '') return null
+  let rest = filePath.slice(index + NODE_MODULES.length)
+  if (rest === '') return null
 
-  return `npm/${sanitizeSegments(bestId)}/${relativeTo(filePath, bestRoot)}`
+  return `npm/${toJsExtension(sanitizeSegments(rest))}`
 }
 
 function normalizeBasePath(basePath: string): string {

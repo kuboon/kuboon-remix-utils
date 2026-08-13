@@ -1,13 +1,7 @@
 export { AssetCompilationError, createAssetServer } from './lib/server.ts'
-export type { AssetCompilerOptions, AssetServerOptions, DenoAssetServer } from './lib/server.ts'
-export { graphFromInfo, loadModuleGraph, ModuleGraphError } from './lib/graph.ts'
-export type {
-  GraphDependency,
-  GraphModule,
-  LoadModuleGraphOptions,
-  ModuleGraph,
-  NpmPackage,
-} from './lib/graph.ts'
+export type { AssetServerOptions, DenoAssetServer } from './lib/server.ts'
+export { loadModuleGraph, ModuleGraphError } from './lib/loader.ts'
+export type { LoadedModule, LoadModuleGraphOptions, ModuleGraph } from './lib/loader.ts'
 export { candidatePathFor, PathRegistry } from './lib/paths.ts'
 export { rewriteImports } from './lib/rewrite.ts'
 export type { SpecifierResolver } from './lib/rewrite.ts'

@@ -25,28 +25,27 @@ describe('candidatePathFor', () => {
     )
   })
 
-  it('maps a file inside an npm package root to that package', () => {
-    let npmRoots = new Map([['/project/node_modules/.deno/ui@1.0.0/node_modules/ui', 'ui@1.0.0']])
-
+  it('maps a file inside node_modules to an npm/ path', () => {
     assert.equal(
       candidatePathFor(
-        'file:///project/node_modules/.deno/ui@1.0.0/node_modules/ui/dist/index.js',
-        { rootDir: '/project', npmRoots },
+        'file:///project/node_modules/.deno/ui@1.0.0/node_modules/@scope/ui/dist/index.js',
+        { rootDir: '/project' },
       ),
-      'npm/ui@1.0.0/dist/index.js',
+      'npm/@scope/ui/dist/index.js',
     )
   })
 
-  it('prefers the longest npm root so a nested copy stays distinct', () => {
-    let npmRoots = new Map([
-      ['/p/node_modules/a', 'a@1.0.0'],
-      ['/p/node_modules/a/node_modules/b', 'b@2.0.0'],
-    ])
-
+  it('uses the last node_modules segment so a nested copy reads as itself', () => {
     assert.equal(
-      candidatePathFor('file:///p/node_modules/a/node_modules/b/index.js', { npmRoots }),
-      'npm/b@2.0.0/index.js',
+      candidatePathFor('file:///p/node_modules/a/node_modules/b/index.js'),
+      'npm/b/index.js',
     )
+  })
+
+  it('prefers npm/ over app/ for a node_modules file inside rootDir', () => {
+    let candidate = candidatePathFor('file:///p/node_modules/b/index.js', { rootDir: '/p' })
+
+    assert.equal(candidate, 'npm/b/index.js')
   })
 
   it('keeps a file outside rootDir servable under fs/', () => {

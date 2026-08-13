@@ -1,8 +1,8 @@
 # remix-assets-deno
 
-On-demand asset server for [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router), built on Deno's own module resolution — so **JSR imports work**.
+On-demand asset server for [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router), built on Deno's own resolver and loader — so **JSR imports work**.
 
-This is the JSR-capable counterpart of [`@remix-run/assets`](https://github.com/remix-run/remix/tree/main/packages/assets). That package resolves imports with `oxc-resolver`, which only understands `node_modules`, so a `jsr:` specifier never resolves — and `nodeModulesDir: "auto"` does not help, because Deno keeps JSR packages in its global cache and materializes only npm packages into `node_modules`. Here the module graph comes from `deno info`, so JSR, npm, `deno.json` import maps, and workspace members all resolve exactly the way the running Deno process resolves them.
+This is the JSR-capable counterpart of [`@remix-run/assets`](https://github.com/remix-run/remix/tree/main/packages/assets). That package resolves imports with `oxc-resolver`, which only understands `node_modules`, so a `jsr:` specifier never resolves — and `nodeModulesDir: "auto"` does not help, because Deno keeps JSR packages in its global cache and materializes only npm packages into `node_modules`. Here resolution, loading, and TypeScript/JSX transpilation all come from [`@deno/loader`](https://jsr.io/@deno/loader), the same machinery the Deno CLI uses, so JSR, npm, `deno.json` import maps, and workspace members resolve exactly the way the running Deno process resolves them.
 
 ## Why not just bundle?
 
@@ -17,9 +17,10 @@ This server does not bundle. Every module gets exactly one URL, so all three ent
 
 ## Features
 
-- **JSR + npm + import maps** — resolution comes from `deno info`, not a reimplementation
+- **JSR + npm + import maps** — resolution comes from `@deno/loader`, not a reimplementation
 - **True module identity** — one resolved specifier, one URL, one instance
-- **No bundling, no build step** — compile on startup, serve from memory
+- **No bundling, no build step, no subprocess** — compile in-process on startup, serve from memory
+- **Runtime graph only** — type-only modules are never served, because they do not exist at runtime
 - **Readable URLs** — `/assets/app/client/session.js`, `/assets/jsr/@kuboon/dpop/0.1.2/client/mod.js`
 - **Conditional requests** — `ETag` + `304`, so reloads are cheap
 
@@ -39,7 +40,6 @@ let assets = await createAssetServer({
   rootDir: new URL('..', import.meta.url).pathname,
   entrypoints: ['client/nav_auth.tsx', 'client/signin_card.tsx', 'client/push_card.tsx'],
   configPath: 'client/deno.json',
-  compilerOptions: { jsx: 'react-jsx', jsxImportSource: '@remix-run/ui' },
 })
 
 let router = createRouter()
@@ -52,7 +52,10 @@ Then point each entry's `<script>` at its public URL:
 <script async type='module' src={assets.entryUrl('client/nav_auth.tsx')} />
 ```
 
-Run with `--allow-run --allow-read --allow-env --allow-net`. `--allow-run` is for `deno info`, which builds the graph at startup; `--allow-net` is only needed when something is not already in the Deno cache.
+Run with `--allow-read --allow-env --allow-net`. `--allow-net` is only needed when something is not already in the Deno cache. **No `--allow-run`** — nothing is shelled out to.
+
+Your `deno.json`'s `compilerOptions` are honored, so a JSX config like
+`{ "jsx": "react-jsx", "jsxImportSource": "@remix-run/ui" }` needs no repeating here.
 
 ### Deleting the globalThis singleton workaround
 
@@ -67,37 +70,23 @@ export const sessionStore = (globalThis[STORE_KEY] ??= new DpopSessionStore())
 export const sessionStore: DpopSessionStore = new DpopSessionStore()
 ```
 
-### Import maps and JSR subpaths
-
-`deno.json`'s `imports` special-cases JSR, so `"@std/encoding": "jsr:@std/encoding@^1"` covers subpaths. A **standalone** import map follows the import-maps spec strictly, so subpaths need their own trailing-slash entry:
-
-```json
-{
-  "imports": {
-    "@std/encoding": "jsr:@std/encoding@^1",
-    "@std/encoding/": "jsr:/@std/encoding@^1/"
-  }
-}
-```
-
 ## API
 
 ### `createAssetServer(options): Promise<DenoAssetServer>`
 
 - `entrypoints` — client entrypoints, relative to `rootDir` or absolute `file:` URLs (required)
-- `rootDir` — directory entrypoints resolve against, and the anchor for npm resolution (default `Deno.cwd()`)
+- `rootDir` — directory entrypoints resolve against (default `Deno.cwd()`)
 - `basePath` — public mount point (default `'/assets'`)
-- `configPath` — `deno.json` supplying the import map
-- `importMap` — a standalone import map, when it is not in `configPath`
-- `compilerOptions` — forwarded to the transpiler, e.g. `{ jsx, jsxImportSource }`
+- `configPath` — `deno.json` supplying the import map and compiler options, relative to `rootDir`
+- `platform` — resolution platform, `'browser'` (default) or `'node'`
+- `nodeConditions` — extra Node resolution conditions for `package.json` exports
 - `cacheControl` — `Cache-Control` for served modules (default `'no-cache'`)
-- `denoExecPath` — the `deno` binary used for `deno info` (default `Deno.execPath()`)
 
 The returned server has `fetch(request)`, `entryUrl(entrypoint)`, `moduleUrls()`, `basePath`, and `reload()`.
 
 ### Lower-level pieces
 
-`loadModuleGraph` / `graphFromInfo` (the `deno info` graph, with each authored specifier paired to what Deno resolved it to), `PathRegistry` / `candidatePathFor` (the specifier ↔ URL bijection), and `rewriteImports` (specifier rewriting via `es-module-lexer`) are exported for building your own pipeline.
+`loadModuleGraph` (resolve, load, and transpile everything reachable from the entrypoints, pairing each authored specifier with what Deno resolved it to), `PathRegistry` / `candidatePathFor` (the specifier ↔ URL bijection), and `rewriteImports` (specifier rewriting via `es-module-lexer`) are exported for building your own pipeline.
 
 ## Scope
 
@@ -108,7 +97,7 @@ Dynamic `import()` is rewritten only when its argument is a string literal — t
 ## Related Packages
 
 - [`@remix-run/assets`](https://github.com/remix-run/remix/tree/main/packages/assets) - the Node-oriented original, for `node_modules`-only projects
-- [`@deno/emit`](https://jsr.io/@deno/emit) - the transpiler this builds on
+- [`@deno/loader`](https://jsr.io/@deno/loader) - Deno's resolver, loader, and transpiler, which this delegates to
 - [`fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router) - the router you mount it on
 
 ## License
