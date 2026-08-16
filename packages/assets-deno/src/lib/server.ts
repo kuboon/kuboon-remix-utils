@@ -1,20 +1,31 @@
 /**
  * The asset server itself.
  *
- * Serves client entrypoints and everything they import as individually addressable ES modules, one
- * URL per module. No bundling — that is the point. A bundler that compiles each client entry
- * separately duplicates every shared module into every bundle, so a module-level singleton silently
- * becomes one instance per entry. Here `./session.ts` has one URL, so the browser evaluates it once
- * no matter how many entries import it.
+ * The problem both of its modes solve is the same one: a module shared by two client entries must
+ * end up as *one* instance in the browser, or a module-level singleton silently becomes one
+ * instance per entry. What breaks that guarantee is compiling each entry independently, which
+ * inlines a private copy of the shared module into every output.
+ *
+ * - `'modules'` (the default) serves one URL per module and never bundles. The browser's module
+ *   registry is keyed by URL, so one URL is one instance. This is how Vite's dev server works.
+ * - `'bundle'` compiles every entrypoint as a single graph and lets `Deno.bundle`'s code splitting
+ *   hoist shared modules into chunks both entries import. This is how Rollup, webpack, and Vite's
+ *   production build do it — far fewer requests and minified output, at the cost of a compile step.
+ *
+ * Neither mode ever compiles an entrypoint on its own, which is the only thing that would duplicate
+ * the singleton.
  */
 
 import * as path from 'node:path'
 
+import { buildBundle } from './bundle.ts'
+import type { BundleModeOptions } from './bundle.ts'
 import { wrapCommonJs } from './cjs.ts'
 import { loadModuleGraph } from './loader.ts'
 import type { LoadModuleGraphOptions } from './loader.ts'
 import { candidatePathFor, PathRegistry } from './paths.ts'
 import { rewriteImports } from './rewrite.ts'
+import type { ServedModule, ServerState } from './state.ts'
 
 /** Options for {@link createAssetServer}. */
 export interface AssetServerOptions {
@@ -30,6 +41,10 @@ export interface AssetServerOptions {
   /**
    * Path to the `deno.json` supplying the import map and compiler options, relative to `rootDir`.
    * Its `compilerOptions` (`jsx`, `jsxImportSource`, …) are honored automatically.
+   *
+   * `'modules'` mode only. `Deno.bundle` takes no config argument — it uses the config the process
+   * itself started with — so in `'bundle'` mode this is ignored and the process must be started
+   * from the project the entrypoints belong to.
    */
   configPath?: string
   /**
@@ -44,6 +59,18 @@ export interface AssetServerOptions {
    * revalidate against the `ETag` instead of holding a stale module.
    */
   cacheControl?: string
+  /**
+   * How the graph is compiled.
+   *
+   * - `'modules'` (default) — one URL per module, no bundling. Module identity is the URL.
+   * - `'bundle'` — one `Deno.bundle({ codeSplitting: true })` call over every entrypoint, so shared
+   *   modules are hoisted into shared chunks. Needs Deno's `--unstable-bundle` flag.
+   *
+   * Both keep a cross-entry singleton a singleton; they differ in request count and readability.
+   */
+  mode?: 'modules' | 'bundle'
+  /** Bundle-mode tuning (minification, source maps, externals). Ignored in `'modules'` mode. */
+  bundle?: BundleModeOptions
 }
 
 /** A compiled asset server. */
@@ -79,19 +106,6 @@ export class AssetCompilationError extends Error {
   }
 }
 
-interface ServedModule {
-  /** The JavaScript to send, with imports already rewritten. */
-  code: string
-  /** Strong validator for conditional requests. */
-  etag: string
-}
-
-interface ServerState {
-  registry: PathRegistry
-  modules: Map<string, ServedModule>
-  entryUrls: Map<string, string>
-}
-
 /**
  * Compiles the entrypoints and returns a server for the resulting modules.
  *
@@ -123,7 +137,7 @@ export async function createAssetServer(
   let basePath = options.basePath ?? '/assets'
   let cacheControl = options.cacheControl ?? 'no-cache'
 
-  let state = await build(options, rootDir, basePath)
+  let state = await compile(options, rootDir, basePath)
 
   return {
     get basePath() {
@@ -151,7 +165,7 @@ export async function createAssetServer(
 
       return new Response(request.method === 'HEAD' ? null : module.code, {
         headers: {
-          'content-type': 'text/javascript; charset=utf-8',
+          'content-type': module.contentType ?? 'text/javascript; charset=utf-8',
           etag: module.etag,
           'cache-control': cacheControl,
         },
@@ -175,12 +189,22 @@ export async function createAssetServer(
     },
 
     async reload(): Promise<void> {
-      state = await build(options, rootDir, basePath)
+      state = await compile(options, rootDir, basePath)
     },
   }
 }
 
-async function build(
+function compile(
+  options: AssetServerOptions,
+  rootDir: string,
+  basePath: string,
+): Promise<ServerState> {
+  return options.mode === 'bundle'
+    ? buildBundle(options, rootDir, basePath)
+    : buildModules(options, rootDir, basePath)
+}
+
+async function buildModules(
   options: AssetServerOptions,
   rootDir: string,
   basePath: string,
