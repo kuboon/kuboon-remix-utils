@@ -2,6 +2,13 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.4.0
+
+- Added `mode: 'bundle'`, which compiles every entrypoint in one `Deno.bundle({ codeSplitting: true, format: 'esm' })` call so modules shared between entries are hoisted into shared chunks. This is the bundler's answer to the same duplicated-singleton problem the default per-module-URL mode solves by preserving module identity — one graph in, code-split chunks out, never one compile per entry. Minified by default, with source maps; far fewer requests than one URL per module. Requires Deno's `--unstable-bundle` flag.
+- Added `bundle` options (`minify`, `keepNames`, `sourcemap`, `external`) and the `BundleError` thrown when the bundler is unavailable or reports diagnostics.
+- `configPath` is documented as `'modules'`-mode only: `Deno.bundle` resolves the import map and `compilerOptions` from the config the process started with, and offers no way to override it.
+- Served artifacts now carry a `Content-Type`, so bundled-mode source maps are served as JSON rather than JavaScript.
+
 ## 0.3.0
 
 - CommonJS dependencies are now served instead of silently emitting a body no browser can run. A CJS module is wrapped as an ES module — its `require()` calls with literal specifiers hoisted to real imports and resolved under Node's require semantics, its body run with `module`, `exports`, `require`, `__filename`, `__dirname`, and `this` bound to `module.exports`, and its exports re-published as a default export plus one named export per name `cjs-module-lexer` detects.
