@@ -1,6 +1,6 @@
 import type {
-  AdapterCapabilities,
-  DatabaseAdapter,
+  DatabaseCapabilities,
+  DatabaseDriver,
   DataManipulationOperation,
   DataManipulationRequest,
   DataManipulationResult,
@@ -23,7 +23,7 @@ import { compileSqliteOperation } from './sql-compiler.ts'
 /**
  * Minimal async surface shared by the libSQL `Client` and `Transaction` types.
  *
- * Both accept `{ sql, args }` statements and multi-statement scripts, which is all the adapter
+ * Both accept `{ sql, args }` statements and multi-statement scripts, which is all the driver
  * needs to route work to either the top-level client or an open interactive transaction.
  */
 type TursoExecutor = {
@@ -32,22 +32,25 @@ type TursoExecutor = {
 }
 
 /**
- * `DatabaseAdapter` implementation for Turso / libSQL clients.
+ * `DatabaseDriver` implementation for Turso / libSQL clients.
  *
- * Turso is SQLite over an async client, so this adapter speaks the SQLite dialect while awaiting
- * every driver call. Use it when `data-table-sqlite`'s synchronous client surface is not available,
+ * Turso is SQLite over an async client, so this driver speaks the SQLite dialect while awaiting
+ * every client call. Use it when `data-table-sqlite`'s synchronous client surface is not available,
  * such as with `@libsql/client` against a remote Turso database or an embedded replica.
+ *
+ * This class is internal: applications construct a {@link TursoDatabase} instead, which owns a
+ * driver and exposes the shared `data-table` query, persistence, and migration APIs.
  */
-export class TursoDatabaseAdapter implements DatabaseAdapter {
+export class TursoDriver implements DatabaseDriver<'sqlite'> {
   /**
-   * The SQL dialect identifier reported by this adapter.
+   * The SQL dialect identifier reported by this driver.
    */
-  dialect = 'sqlite'
+  readonly dialect = 'sqlite'
 
   /**
-   * Feature flags describing the sqlite behaviors supported by this adapter.
+   * Feature flags describing the sqlite behaviors supported by this driver.
    */
-  capabilities: AdapterCapabilities
+  readonly capabilities: DatabaseCapabilities
 
   #client: TursoClient
   #transactions = new Map<string, TursoTransaction>()
@@ -242,6 +245,53 @@ export class TursoDatabaseAdapter implements DatabaseAdapter {
     await transaction.execute({ sql: 'release savepoint ' + quoteIdentifier(name), args: [] })
   }
 
+  /**
+   * Drops every user-defined object in the connected database.
+   *
+   * The libSQL client is supplied by the caller and may point at a remote Turso database, so there
+   * is no file to unlink and no database to recreate the way a config-backed driver would. Emptying
+   * the schema reaches the same end state: `Database.reset()` can migrate from scratch afterwards.
+   *
+   * Foreign key enforcement is suspended for the duration and restored to whatever the connection
+   * reported beforehand. Everything runs as a single multi-statement script so it stays on one
+   * connection — over libSQL's HTTP transport, `pragma` state does not survive between requests.
+   * @returns A promise that resolves once the schema is empty.
+   */
+  async wipe(): Promise<void> {
+    // `sqlite_autoindex_*` and friends are dropped with their tables and cannot be dropped directly.
+    let objects = await this.#client.execute({
+      sql:
+        "select type, name from sqlite_master where type in ('trigger', 'view', 'index', 'table')" +
+        " and name not like 'sqlite\\_%' escape '\\'" +
+        " order by case type when 'trigger' then 0 when 'view' then 1 when 'index' then 2 else 3 end",
+      args: [],
+    })
+
+    if (objects.rows.length === 0) {
+      return
+    }
+
+    let foreignKeys = await this.#client.execute({ sql: 'pragma foreign_keys', args: [] })
+    let restore = foreignKeys.rows[0]?.foreign_keys ? 'on' : 'off'
+
+    let drops = objects.rows.map((row) =>
+      'drop ' + String(row.type) + ' if exists ' + quoteIdentifier(String(row.name)) + ';'
+    )
+
+    await this.#client.executeMultiple(
+      ['pragma foreign_keys = off;', ...drops, 'pragma foreign_keys = ' + restore + ';'].join('\n'),
+    )
+  }
+
+  /**
+   * Releases handles owned by this driver.
+   *
+   * The libSQL client is caller-owned — this driver never opens one — so there is nothing to
+   * release and this is a no-op, safe to call repeatedly. Close the client yourself when the
+   * application shuts down.
+   */
+  close(): void {}
+
   #resolveExecutor(token: TransactionToken | undefined): TursoExecutor {
     if (!token) {
       return this.#client
@@ -259,28 +309,6 @@ export class TursoDatabaseAdapter implements DatabaseAdapter {
 
     return transaction
   }
-}
-
-/**
- * Creates a turso `DatabaseAdapter`.
- * @param client libSQL client (for example from `@libsql/client`).
- * @returns A configured turso adapter.
- * @example
- * ```ts
- * import { createClient } from '@libsql/client'
- * import { createDatabase } from '@remix-run/data-table'
- * import { createTursoDatabaseAdapter } from '@kuboon/remix-data-table-sqlite-turso'
- *
- * let client = createClient({
- *   url: process.env.TURSO_DATABASE_URL,
- *   authToken: process.env.TURSO_AUTH_TOKEN,
- * })
- * let adapter = createTursoDatabaseAdapter(client)
- * let db = createDatabase(adapter)
- * ```
- */
-export function createTursoDatabaseAdapter(client: TursoClient): TursoDatabaseAdapter {
-  return new TursoDatabaseAdapter(client)
 }
 
 function normalizeRows(rows: unknown[]): Record<string, unknown>[] {

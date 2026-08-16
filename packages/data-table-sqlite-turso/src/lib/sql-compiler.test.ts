@@ -4,8 +4,8 @@ import {
   and,
   between,
   column,
-  createDatabase,
-  type DatabaseAdapter,
+  Database,
+  type DatabaseDriver,
   type DataManipulationOperation,
   eq,
   gt,
@@ -45,7 +45,7 @@ const tasks = table({
 
 let statements: DataManipulationOperation[] = []
 
-const fakeAdapter = {
+const fakeDriver = {
   capabilities: {
     upsert: true,
     returning: true,
@@ -68,8 +68,8 @@ const fakeAdapter = {
     }
     return {}
   },
-} as DatabaseAdapter
-const db = createDatabase(fakeAdapter)
+} as DatabaseDriver
+const db = new Database(fakeDriver)
 
 describe('turso sql-compiler', () => {
   beforeEach(() => {

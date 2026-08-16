@@ -10,8 +10,8 @@
     "npm:@libsql/client@~0.17.4": "0.17.4",
     "npm:@modelcontextprotocol/server@2": "2.0.0",
     "npm:@remix-run/assert@0.3": "0.3.0",
-    "npm:@remix-run/data-table@0.3": "0.3.0",
-    "npm:@remix-run/fetch-router@~0.20.1": "0.20.1",
+    "npm:@remix-run/data-table@0.4": "0.4.0",
+    "npm:@remix-run/fetch-router@0.21": "0.21.0",
     "npm:cjs-module-lexer@^1.4.0": "1.4.3",
     "npm:es-module-lexer@^1.7.0": "1.7.0"
   },
@@ -134,17 +134,17 @@
     "@remix-run/assert@0.3.0": {
       "integrity": "sha512-GBA9klvJdG5YSTwRNur54LQcfqDOtir+x1TDbv3dzB9FS2Li9CEiRLp1EpBcaYrj4ByO03WJCWFBiY8bTMy4vQ=="
     },
-    "@remix-run/data-table@0.3.0": {
-      "integrity": "sha512-2Ikjlm3T2qtMTeWm5v/76iXEP2fqqdJGxjTZ6OFre5b5BFoRyaq/iBmDc0lkXPoOGvkeOxNuRo7L0dRkMTXwJQ=="
+    "@remix-run/data-table@0.4.0": {
+      "integrity": "sha512-Flh2PP85hhjNZikxaQvdsrgna3Qv1OWJ/l7RTAKD+K9YdpVL+VnJMOKjyiMzehNBPuCVZB9ST7dF+5A/nfVXtg=="
     },
-    "@remix-run/fetch-router@0.20.1": {
-      "integrity": "sha512-vxlIu4LHY5KyqOdlXFjJeUefUJxgc7499/cSsBl2bzhQnU5DayPHN/dklBOiG+U7GIYQMmObAinmubkwzaXyuw==",
+    "@remix-run/fetch-router@0.21.0": {
+      "integrity": "sha512-dN3Lsd4dHAV0USTF3Dm04effXcdr7GMgXiqeozTFDfvVIx2DbRAl94bwF6UdAWurgTOK2Oyz4cs9uadW/ylWXA==",
       "dependencies": [
         "@remix-run/route-pattern"
       ]
     },
-    "@remix-run/route-pattern@0.23.0": {
-      "integrity": "sha512-8eZfG9owfdvC1OqWemjyIqbFTjWbKTW8RrcbppXrnv1GHMIpFOQx9Ly6F1OXNM03aK1c923JypacoRjamyfVEw=="
+    "@remix-run/route-pattern@0.24.0": {
+      "integrity": "sha512-w0/lhgY40l2GrBQjJIOeYWIuKm1rxlOsc9Hvt+nyydnka0v4aI9Vv0VK4XzLD3aP08JzGtTlxFxwf1PZ8SGdLg=="
     },
     "@types/node@26.1.1": {
       "integrity": "sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==",
@@ -232,7 +232,7 @@
           "jsr:@std/testing@1",
           "npm:@libsql/client@~0.17.4",
           "npm:@remix-run/assert@0.3",
-          "npm:@remix-run/data-table@0.3"
+          "npm:@remix-run/data-table@0.4"
         ]
       },
       "packages/mcp": {
@@ -240,7 +240,7 @@
           "jsr:@std/testing@1",
           "npm:@modelcontextprotocol/server@2",
           "npm:@remix-run/assert@0.3",
-          "npm:@remix-run/fetch-router@~0.20.1"
+          "npm:@remix-run/fetch-router@0.21"
         ]
       },
       "packages/ssg": {
