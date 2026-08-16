@@ -1,11 +1,11 @@
 {
   "name": "@kuboon/remix-data-table-sqlite-turso",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "exports": "./src/index.ts",
   "imports": {
-    "@remix-run/data-table": "npm:@remix-run/data-table@^0.3.0",
-    "@remix-run/data-table/sql-helpers": "npm:@remix-run/data-table@^0.3.0/sql-helpers",
+    "@remix-run/data-table": "npm:@remix-run/data-table@^0.4.0",
+    "@remix-run/data-table/sql-helpers": "npm:@remix-run/data-table@^0.4.0/sql-helpers",
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
     "@libsql/client": "npm:@libsql/client@^0.17.4",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd"

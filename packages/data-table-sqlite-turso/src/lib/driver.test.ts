@@ -1,8 +1,9 @@
 import * as assert from '@remix-run/assert'
 import { describe, it } from '@std/testing/bdd'
-import { column, createDatabase, table } from '@remix-run/data-table'
+import { column, table } from '@remix-run/data-table'
 
-import { createTursoDatabaseAdapter } from './adapter.ts'
+import { createTursoDatabase } from './database.ts'
+import { TursoDriver } from './driver.ts'
 
 const accounts = table({
   name: 'accounts',
@@ -42,7 +43,7 @@ function resultSet(overrides: ResultSetOverrides = {}): unknown {
   }
 }
 
-describe('turso adapter', () => {
+describe('turso driver', () => {
   it('short-circuits insertMany([]) and returns empty rows for returning queries', async () => {
     let executeCalls = 0
     let client = {
@@ -55,8 +56,8 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let result = await adapter.execute({
+    let driver = new TursoDriver(client as never)
+    let result = await driver.execute({
       operation: {
         kind: 'insertMany',
         table: accounts,
@@ -74,7 +75,7 @@ describe('turso adapter', () => {
     assert.equal(executeCalls, 0)
   })
 
-  it('checks table and column existence through adapter introspection hooks', async () => {
+  it('checks table and column existence through driver introspection hooks', async () => {
     let executedStatements: string[] = []
 
     let client = {
@@ -92,9 +93,9 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let hasTable = await adapter.hasTable({ name: 'users' })
-    let hasColumn = await adapter.hasColumn({ schema: 'app', name: 'users' }, 'email')
+    let driver = new TursoDriver(client as never)
+    let hasTable = await driver.hasTable({ name: 'users' })
+    let hasColumn = await driver.hasColumn({ schema: 'app', name: 'users' }, 'email')
 
     assert.equal(hasTable, true)
     assert.equal(hasColumn, true)
@@ -115,10 +116,10 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
+    let driver = new TursoDriver(client as never)
 
-    assert.equal(await adapter.hasTable({ name: 'users' }), false)
-    assert.equal(await adapter.hasColumn({ name: 'users' }, 'missing'), false)
+    assert.equal(await driver.hasTable({ name: 'users' }), false)
+    assert.equal(await driver.hasColumn({ name: 'users' }, 'missing'), false)
   })
 
   it('routes read-only transactions to the libSQL read mode', async () => {
@@ -149,11 +150,11 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let readToken = await adapter.beginTransaction({ readOnly: true })
-    let writeToken = await adapter.beginTransaction({ isolationLevel: 'serializable' })
-    await adapter.commitTransaction(readToken)
-    await adapter.commitTransaction(writeToken)
+    let driver = new TursoDriver(client as never)
+    let readToken = await driver.beginTransaction({ readOnly: true })
+    let writeToken = await driver.beginTransaction({ isolationLevel: 'serializable' })
+    await driver.commitTransaction(readToken)
+    await driver.commitTransaction(writeToken)
 
     assert.deepEqual(modes, ['read', 'write'])
   })
@@ -193,13 +194,13 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let token = await adapter.beginTransaction()
+    let driver = new TursoDriver(client as never)
+    let token = await driver.beginTransaction()
 
-    await adapter.createSavepoint(token, 'sp"name')
-    await adapter.rollbackToSavepoint(token, 'sp"name')
-    await adapter.releaseSavepoint(token, 'sp"name')
-    await adapter.rollbackTransaction(token)
+    await driver.createSavepoint(token, 'sp"name')
+    await driver.rollbackToSavepoint(token, 'sp"name')
+    await driver.releaseSavepoint(token, 'sp"name')
+    await driver.rollbackTransaction(token)
 
     assert.deepEqual(executed, [
       'savepoint "sp""name"',
@@ -223,31 +224,31 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
+    let driver = new TursoDriver(client as never)
 
     await assert.rejects(
-      () => adapter.commitTransaction({ id: 'tx_missing' }),
+      () => driver.commitTransaction({ id: 'tx_missing' }),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.rollbackTransaction({ id: 'tx_missing' }),
+      () => driver.rollbackTransaction({ id: 'tx_missing' }),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.createSavepoint({ id: 'tx_missing' }, 'sp'),
+      () => driver.createSavepoint({ id: 'tx_missing' }, 'sp'),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.rollbackToSavepoint({ id: 'tx_missing' }, 'sp'),
+      () => driver.rollbackToSavepoint({ id: 'tx_missing' }, 'sp'),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.releaseSavepoint({ id: 'tx_missing' }, 'sp'),
+      () => driver.releaseSavepoint({ id: 'tx_missing' }, 'sp'),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
       () =>
-        adapter.execute({
+        driver.execute({
           operation: {
             kind: 'insert',
             table: accounts,
@@ -258,15 +259,15 @@ describe('turso adapter', () => {
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.hasTable({ name: 'users' }, { id: 'tx_missing' }),
+      () => driver.hasTable({ name: 'users' }, { id: 'tx_missing' }),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.hasColumn({ name: 'users' }, 'email', { id: 'tx_missing' }),
+      () => driver.hasColumn({ name: 'users' }, 'email', { id: 'tx_missing' }),
       /Unknown transaction token: tx_missing/,
     )
     await assert.rejects(
-      () => adapter.executeScript('select 1', { id: 'tx_missing' }),
+      () => driver.executeScript('select 1', { id: 'tx_missing' }),
       /Unknown transaction token: tx_missing/,
     )
   })
@@ -283,8 +284,8 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let result = await adapter.execute({
+    let driver = new TursoDriver(client as never)
+    let result = await driver.execute({
       operation: {
         kind: 'count',
         table: accounts,
@@ -311,8 +312,8 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let result = await adapter.execute({
+    let driver = new TursoDriver(client as never)
+    let result = await driver.execute({
       operation: {
         kind: 'select',
         table: accounts,
@@ -343,8 +344,8 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let result = await adapter.execute({
+    let driver = new TursoDriver(client as never)
+    let result = await driver.execute({
       operation: {
         kind: 'insert',
         table: accounts,
@@ -368,7 +369,7 @@ describe('turso adapter', () => {
       },
     }
 
-    let db = createDatabase(createTursoDatabaseAdapter(client as never))
+    let db = createTursoDatabase(client as never)
     let result = await db.updateMany(accounts, { status: 'inactive' }, { where: { id: 1 } })
 
     assert.equal(result.affectedRows, 2)
@@ -385,8 +386,8 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let result = await adapter.execute({
+    let driver = new TursoDriver(client as never)
+    let result = await driver.execute({
       operation: {
         kind: 'insert',
         table: accounts,
@@ -409,8 +410,8 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    let result = await adapter.execute({
+    let driver = new TursoDriver(client as never)
+    let result = await driver.execute({
       operation: {
         kind: 'insert',
         table: accountProjects,
@@ -435,9 +436,9 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
+    let driver = new TursoDriver(client as never)
 
-    await adapter.execute({
+    await driver.execute({
       operation: {
         kind: 'insert',
         table: accounts,
@@ -483,14 +484,98 @@ describe('turso adapter', () => {
       },
     }
 
-    let adapter = createTursoDatabaseAdapter(client as never)
-    await adapter.executeScript('create table widgets (id integer primary key)')
+    let driver = new TursoDriver(client as never)
+    await driver.executeScript('create table widgets (id integer primary key)')
 
-    let token = await adapter.beginTransaction()
-    await adapter.executeScript('insert into widgets values (1)', token)
-    await adapter.commitTransaction(token)
+    let token = await driver.beginTransaction()
+    await driver.executeScript('insert into widgets values (1)', token)
+    await driver.commitTransaction(token)
 
     assert.deepEqual(scripts, ['create table widgets (id integer primary key)'])
     assert.deepEqual(transactionScripts, ['insert into widgets values (1)'])
+  })
+
+  it('wipe drops every user object and restores the foreign key setting', async () => {
+    let scripts: string[] = []
+    let queries: string[] = []
+
+    let client = {
+      execute(statement: { sql: string; args: unknown[] }) {
+        queries.push(statement.sql)
+
+        if (statement.sql === 'pragma foreign_keys') {
+          return Promise.resolve(resultSet({ rows: [{ foreign_keys: 1 }] }))
+        }
+
+        return Promise.resolve(
+          resultSet({
+            rows: [
+              { type: 'trigger', name: 'widgets_ai' },
+              { type: 'view', name: 'widget_names' },
+              { type: 'index', name: 'widgets_name_idx' },
+              { type: 'table', name: 'wid"gets' },
+            ],
+          }),
+        )
+      },
+      executeMultiple(sql: string) {
+        scripts.push(sql)
+        return Promise.resolve()
+      },
+    }
+
+    await new TursoDriver(client as never).wipe()
+
+    assert.equal(queries.length, 2)
+    assert.ok(queries[0].includes('from sqlite_master'))
+    assert.equal(queries[1], 'pragma foreign_keys')
+    assert.deepEqual(scripts, [
+      [
+        'pragma foreign_keys = off;',
+        'drop trigger if exists "widgets_ai";',
+        'drop view if exists "widget_names";',
+        'drop index if exists "widgets_name_idx";',
+        'drop table if exists "wid""gets";',
+        'pragma foreign_keys = on;',
+      ].join('\n'),
+    ])
+  })
+
+  it('wipe leaves an empty database alone', async () => {
+    let scripts: string[] = []
+    let client = {
+      execute() {
+        return Promise.resolve(resultSet({ rows: [] }))
+      },
+      executeMultiple(sql: string) {
+        scripts.push(sql)
+        return Promise.resolve()
+      },
+    }
+
+    await new TursoDriver(client as never).wipe()
+
+    assert.deepEqual(scripts, [])
+  })
+
+  it('close is a no-op that is safe to repeat, because the client is caller-owned', () => {
+    let closed = 0
+    let client = {
+      execute() {
+        return Promise.resolve(resultSet())
+      },
+      executeMultiple() {
+        return Promise.resolve()
+      },
+      close() {
+        closed += 1
+      },
+    }
+
+    let driver = new TursoDriver(client as never)
+    driver.close()
+    driver.close()
+
+    assert.equal(closed, 0)
   })
 })
