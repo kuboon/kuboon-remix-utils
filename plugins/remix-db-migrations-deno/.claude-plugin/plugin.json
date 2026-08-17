@@ -1,0 +1,10 @@
+{
+  "name": "remix-db-migrations-deno",
+  "description": "Run @remix-run/data-table migrations from Deno: remix.json db config, timestamped up.sql/down.sql directories, deno task wiring, the Deno-specific traps (unversioned npm:remix is Remix v2, node:sqlite works but pg/mysql2 must be added), and — for Turso/libSQL, which remix db cannot drive — the CLI shipped by @kuboon/remix-data-table-sqlite-turso.",
+  "version": "0.2.0",
+  "author": {
+    "name": "Ohkubo KOHEI",
+    "email": "kuboon@gmail.com"
+  },
+  "license": "MIT"
+}
