@@ -20,7 +20,7 @@
     }
   },
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-env --allow-net --unstable-bundle",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-ffi --unstable-bundle",
     "check": "deno check packages/*/src"
   }
 }

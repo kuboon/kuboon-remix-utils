@@ -21,4 +21,4 @@ jobs:
       - name: Type check
         run: deno check packages/*/src
       - name: Test
-        run: deno test --allow-read --allow-write --allow-env --allow-net --unstable-bundle
+        run: deno test --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-ffi --unstable-bundle
