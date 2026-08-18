@@ -1,17 +1,22 @@
 {
   "name": "@kuboon/remix-data-table-sqlite-turso",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cli": "./src/cli.ts"
+  },
   "imports": {
     "@remix-run/data-table": "npm:@remix-run/data-table@^0.4.0",
+    "@remix-run/data-table/cli": "npm:@remix-run/data-table@^0.4.0/cli",
+    "@remix-run/data-table/migrations/node": "npm:@remix-run/data-table@^0.4.0/migrations/node",
     "@remix-run/data-table/sql-helpers": "npm:@remix-run/data-table@^0.4.0/sql-helpers",
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
     "@libsql/client": "npm:@libsql/client@^0.17.4",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd"
   },
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-env",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-sys --allow-ffi",
     "check": "deno check src"
   },
   "publish": {

@@ -6,12 +6,29 @@ This is a [Deno workspace](https://docs.deno.com/runtime/fundamentals/workspaces
 
 ## Packages
 
-| Package                                                         | JSR                                                                                             | Description                                                 |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [`assets-deno`](./packages/assets-deno)                         | [`@kuboon/remix-assets-deno`](https://jsr.io/@kuboon/remix-assets-deno)                         | JSR-capable on-demand asset server for `remix/fetch-router` |
-| [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL database for `@remix-run/data-table`   |
-| [`mcp`](./packages/mcp)                                         | [`@kuboon/remix-mcp`](https://jsr.io/@kuboon/remix-mcp)                                         | Serve an MCP server from a `remix/fetch-router` route       |
-| [`ssg`](./packages/ssg)                                         | [`@kuboon/remix-ssg`](https://jsr.io/@kuboon/remix-ssg)                                         | Static site generation (prerender) for `remix/fetch-router` |
+| Package                                                         | JSR                                                                                             | Description                                                                                          |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`assets-deno`](./packages/assets-deno)                         | [`@kuboon/remix-assets-deno`](https://jsr.io/@kuboon/remix-assets-deno)                         | JSR-capable on-demand asset server for `remix/fetch-router`                                          |
+| [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL database for `@remix-run/data-table`, with a migration CLI replacing `remix db` |
+| [`mcp`](./packages/mcp)                                         | [`@kuboon/remix-mcp`](https://jsr.io/@kuboon/remix-mcp)                                         | Serve an MCP server from a `remix/fetch-router` route                                                |
+| [`ssg`](./packages/ssg)                                         | [`@kuboon/remix-ssg`](https://jsr.io/@kuboon/remix-ssg)                                         | Static site generation (prerender) for `remix/fetch-router`                                          |
+
+## Claude Code plugins
+
+`plugins/` holds Claude Code plugins whose skills document these packages, kept
+next to the implementation they describe rather than in a separate skills repo.
+[`kuboon/agent-plugins`](https://github.com/kuboon/agent-plugins) lists them in
+its marketplace with a `git-subdir` source pointing back here, so a skill and the
+package it documents change in the same commit.
+
+| Plugin                                                           | Skill                                                                                                                                                                       |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`remix-db-migrations-deno`](./plugins/remix-db-migrations-deno) | Running `@remix-run/data-table` migrations from Deno — `remix db` for sqlite/postgres/mysql, and this repo's `@kuboon/remix-data-table-sqlite-turso` CLI for Turso / libSQL |
+
+```sh
+claude plugin marketplace add kuboon/agent-plugins
+claude plugin install remix-db-migrations-deno@agent-plugins
+```
 
 ## Development
 

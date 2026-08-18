@@ -12,6 +12,7 @@ Requires `@remix-run/data-table@^0.4.0` (Remix v3 `beta.6` or later).
 - **Full `data-table` API Support**: Queries, relations, writes, and interactive transactions
 - **Package-Owned Compiler**: SQL compilation lives in this package, with optional shared pure helpers from `data-table`
 - **Multi-Statement Migrations**: `executeScript()` runs `up.sql` / `down.sql` files via libSQL's `executeMultiple()`
+- **Migration CLI**: `…/cli` replaces `remix db`, which cannot drive this database — plus a `rollback` the Remix CLI does not have
 - **SQLite Capabilities Enabled By Default**:
   - `returning: true`
   - `savepoints: true`
@@ -48,6 +49,73 @@ let db = createTursoDatabase(client)
 ```
 
 `@libsql/client` is a peer dependency, so install it alongside this package. Import any driver-specific types you need directly from `@libsql/client`; the client type is also re-exported here as `TursoDatabaseClient`.
+
+## Migrations
+
+`remix db` cannot manage this database. The Remix CLI builds its database from the `db.adapter` section of `remix.json`, whose `type` is a closed set — a fourth type is rejected outright, and there is no plugin hook:
+
+```
+Error [RMX_INVALID_CONFIG] Invalid Remix configuration
+remix.json:1:32: Expected one of: sqlite, postgres, mysql at db.adapter.type
+```
+
+So this package ships the replacement. Wire it up as a task:
+
+```jsonc
+// deno.json
+{
+  "tasks": { "db": "deno run -A jsr:@kuboon/remix-data-table-sqlite-turso/cli" }
+}
+```
+
+```sh
+deno task db migrate                       # apply pending migrations
+deno task db migrate --to 20260101000000   # stop after this one
+deno task db rollback --step 1             # run down.sql — remix db has no flag for this
+deno task db status                        # id, name, applied | pending | drifted | missing
+deno task db seed                          # run the SQL seed file
+deno task db reset --force                 # wipe, migrate, seed
+deno task db wipe --force                  # drop every user table, view, index, and trigger
+deno task db --help
+```
+
+Migrations are the same directories of plain SQL `remix db` reads — `YYYYMMDDHHmmss_name/up.sql` plus an optional `down.sql` — journaled in the same `data_table_migrations` table, and printed the same way, because each command is handed to `runRemixDb()` from `@remix-run/data-table`: the same function the Remix CLI calls. Only the wiring differs.
+
+Connection and paths come from flags and the environment rather than `remix.json`, which is never read:
+
+| Option                    | Default                                        |
+| ------------------------- | ---------------------------------------------- |
+| `--url <url>`             | `$TURSO_DATABASE_URL`, else `file:data/app.db` |
+| `--auth-token <token>`    | `$TURSO_AUTH_TOKEN`                            |
+| `--connection-env <name>` | reads the URL from a different variable        |
+| `--migrations <path>`     | `./db/migrations`                              |
+| `--seed <path>`           | `./db/seed.sql`                                |
+| `--journal-table <name>`  | `data_table_migrations`                        |
+
+`migrate` and `rollback` also take `--dry-run` (report, change nothing); `rollback` takes `--step <n>` (default `1`) or `--to <migration>`, which reverts back through that migration inclusive. `reset` and `wipe` refuse to run without `--force`.
+
+Node and Bun get the same commands from a one-line entry point, since importing the `/cli` subpath runs it:
+
+```js
+// db/cli.js — node db/cli.js migrate
+import '@kuboon/remix-data-table-sqlite-turso/cli'
+```
+
+To embed the commands in your own script — to load `.env` first, or to build the client from `@libsql/client/web` — call the same function the executable does:
+
+```ts
+// db/cli.ts — deno task db migrate
+import { runTursoDbCli } from '@kuboon/remix-data-table-sqlite-turso'
+
+Deno.exit(await runTursoDbCli(Deno.args))
+```
+
+`runTursoDbCli(argv, options)` takes `env` and a `createClient` override for exactly that. Unlike the library, the CLI opens the client itself and always closes it.
+
+Two things worth knowing:
+
+- **Do not point `remix db`'s `sqlite` adapter at the same local `file:` database.** It appears to work — same dialect, same journal table — but it only ever works for the local file, so staging and production still need this command, and you end up with two migration paths that can disagree.
+- **Deno needs more than the usual permissions.** `@libsql/client` loads a native module, so the minimum is `--allow-read --allow-write --allow-env --allow-sys --allow-ffi` (leaving out `--allow-sys` fails on `cpus` while detecting glibc, and `--allow-env` on `LIBSQL_JS_DEV`). `-A` is the pragmatic choice for a local task. A remote `libsql://` URL adds `--allow-net`.
 
 ## Lifecycle
 

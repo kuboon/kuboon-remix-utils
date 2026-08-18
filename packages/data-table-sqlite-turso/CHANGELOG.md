@@ -2,6 +2,27 @@
 
 This is the changelog for [`data-table-sqlite-turso`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/data-table-sqlite-turso). It follows [semantic versioning](https://semver.org/).
 
+## 0.3.0
+
+- Added a migration CLI, exported as `./cli`, because `remix db` cannot drive this database: the Remix CLI builds its database from `remix.json`'s `db.adapter`, whose `type` is a closed set (`Expected one of: sqlite, postgres, mysql at db.adapter.type`) with no plugin hook.
+
+  ```jsonc
+  // deno.json
+  { "tasks": { "db": "deno run -A jsr:@kuboon/remix-data-table-sqlite-turso/cli" } }
+  ```
+
+  ```sh
+  deno task db migrate | rollback | status | seed | reset --force | wipe --force
+  ```
+
+  Each command is handed to `runRemixDb()` from `@remix-run/data-table` — the same function the Remix CLI calls — so migration directories, the `data_table_migrations` journal, and the printed output are identical to `remix db`. Connection and paths come from flags and the environment (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `--url`, `--migrations`, `--seed`, `--journal-table`, `--connection-env`) rather than from `remix.json`, which is never read.
+
+- `rollback` runs `down.sql`, which `remix db` cannot: its `--to` only bounds forward progress, and there is no `--down` or `--step`. Takes `--step <n>` (default `1`) or `--to <migration>` (inclusive), plus `--dry-run`, which `migrate` accepts too.
+
+- Exported `runTursoDbCli()` and `parseTursoDbArgs()` from the package root, for wiring the same commands into a script that loads `.env` first or builds its client from a different `@libsql/client` entry point. The CLI opens the client itself and always closes it — the library's caller-owned rule applies to `createTursoDatabase()`, not to a process whose whole job is one command.
+
+- Repository housekeeping: the test tasks and CI now pass `--allow-sys --allow-ffi`, which `@libsql/client`'s native module requires under Deno.
+
 ## 0.2.0
 
 - BREAKING CHANGE: Updated for `@remix-run/data-table@0.4.0` (Remix v3 `beta.6`), which removed the adapter layer. `TursoDatabaseAdapter` and `createTursoDatabaseAdapter()` are gone; use `TursoDatabase` / `createTursoDatabase(client)`, which extend `Database` directly and no longer need `createDatabase()`.
