@@ -4,8 +4,11 @@ This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon
 
 ## 0.4.2
 
-- Fixed: the package no longer references `Deno.bundle`'s own types. Those exist only when the process was type-checked with `--unstable-bundle`, so `BundleError.messages` — public API — could not be type-checked by a consumer that had not enabled an unstable flag. The bundler API this module uses is now declared structurally as `BundleMessage` (exported) and reached through a cast. This was meant to ship in 0.4.0 and was left out by mistake.
-- The package's own `deno check` now runs under an explicit `lib` (`deno.ns`, `dom`, `esnext`), which is what a consumer sees. Referencing an unstable-only global from a type position fails the check instead of reaching a release.
+- Internals use `Deno.bundle`'s own types again, called directly rather than through a hand-written interface and a cast. The unstable bundler API will change; with its real types a signature change fails this package's type check, where a structural copy would have accepted a stale option name and silently dropped it.
+- `BundleMessage` stays declared here rather than aliased to `Deno.bundle.Message`, for the one place it is public API: `BundleError.messages`. A consumer reading `error.messages[0].text` resolves that type under their own `compilerOptions.lib`, and a pinned `lib` would otherwise force them to add `deno.unstable` to read a diagnostic.
+- The package's `lib` pin gains `deno.unstable`, stating outright that this package builds on an unstable Deno API.
+
+Note on what makes `Deno.bundle`'s types visible, since 0.4.0's notes had it wrong: it is the `compilerOptions.lib` pin, not the `--unstable-bundle` flag. Pinning `lib` replaces Deno's default set, which includes the unstable declarations. It also does not reach consumers — Deno type-checks local and workspace dependencies, never `jsr:`/`npm:`/`http:` ones — so a package's use of unstable types is invisible from a JSR install either way. The `--unstable-bundle` opt-in remains required at _runtime_.
 
 ## 0.4.1
 

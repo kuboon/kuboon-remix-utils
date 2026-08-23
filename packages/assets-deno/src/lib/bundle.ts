@@ -36,45 +36,15 @@ import { PathRegistry, toJsExtension } from './paths.ts'
 import type { ServedModule, ServerState } from './state.ts'
 
 /**
- * The slice of `Deno.bundle` this module uses, declared structurally.
+ * A bundler diagnostic, declared here rather than aliased to `Deno.bundle.Message`.
  *
- * `Deno.bundle`'s own types only exist when the process was type-checked with `--unstable-bundle`,
- * and a consumer of this package should not have to enable an unstable flag just to type-check
- * their own code. So the API is described here and reached through a cast.
+ * This one type is part of the public surface — `BundleError.messages` — and a consumer reading
+ * `error.messages[0].text` resolves it under *their* `compilerOptions.lib`. Pinning `lib`
+ * explicitly replaces Deno's default set, which drops the unstable declarations, so naming
+ * `Deno.bundle.Message` here would make a pinned consumer add `deno.unstable` just to read a
+ * diagnostic. Everything internal uses `Deno.bundle`'s own types, so a change to that unstable API
+ * fails this package's type check rather than drifting silently.
  */
-interface BundleApi {
-  (options: {
-    entrypoints: string[]
-    outputDir?: string
-    write?: boolean
-    format?: 'esm' | 'cjs' | 'iife'
-    codeSplitting?: boolean
-    platform?: 'browser' | 'deno'
-    minify?: boolean
-    keepNames?: boolean
-    external?: string[]
-    sourcemap?: 'linked' | 'inline' | 'external'
-  }): Promise<BundleResult>
-}
-
-interface BundleResult {
-  success: boolean
-  errors: BundleMessage[]
-  warnings: BundleMessage[]
-  outputFiles?: BundleOutputFile[]
-}
-
-/** One output file the bundler produced, kept in memory. */
-interface BundleOutputFile {
-  /** Absolute path the file *would* have been written to. */
-  path: string
-  /** Content hash, reused as the `ETag`. */
-  hash: string
-  /** The file's contents. */
-  text(): string
-}
-
-/** A diagnostic from the bundler. */
 export interface BundleMessage {
   text: string
   location?: { file: string; line: number; column: number } | null
@@ -127,11 +97,12 @@ export async function buildBundle(
   rootDir: string,
   basePath: string,
 ): Promise<ServerState> {
-  let bundle = (Deno as { bundle?: BundleApi }).bundle
-  if (typeof bundle !== 'function') {
+  // The runtime API — unlike its types — really is absent without the unstable opt-in.
+  if (typeof Deno.bundle !== 'function') {
     throw new BundleError(
-      'Deno.bundle is unavailable. Bundled mode needs the --unstable-bundle flag ' +
-        '(e.g. `deno run --unstable-bundle -A server.ts`), or use mode: "modules" instead.',
+      "Deno.bundle is unavailable. Bundled mode needs Deno's bundle API enabled, either with the " +
+        '--unstable-bundle flag or `"unstable": ["bundle"]` in the deno.json the process started ' +
+        'with. Otherwise use mode: "modules".',
     )
   }
 
@@ -155,7 +126,7 @@ export async function buildBundle(
   let tuning = options.bundle ?? {}
   let sourcemap = tuning.sourcemap ?? 'linked'
 
-  let result = await bundle({
+  let result = await Deno.bundle({
     entrypoints: entryPaths.map((entry) => entry.filePath),
     outputDir,
     write: false,
