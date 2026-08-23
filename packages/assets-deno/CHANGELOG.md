@@ -2,6 +2,10 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.4.1
+
+- Updated `es-module-lexer` to 2.x and `cjs-module-lexer` to 2.x. Both are internal — no exported type mentions them — and the CommonJS interop suite that exercises them (detection, `require()` collection, named-export detection, and a wrapped module actually running) passes unchanged.
+
 ## 0.4.0
 
 - Added `mode: 'bundle'`, which compiles every entrypoint in one `Deno.bundle({ codeSplitting: true, format: 'esm' })` call so modules shared between entries are hoisted into shared chunks. This is the bundler's answer to the same duplicated-singleton problem the default per-module-URL mode solves by preserving module identity — one graph in, code-split chunks out, never one compile per entry. Minified by default, with source maps; far fewer requests than one URL per module. Requires Deno's `--unstable-bundle` flag.
