@@ -1,3 +1,5 @@
+import { init, parse as parseModule } from 'es-module-lexer'
+
 import { parse } from './html-parser.ts'
 import type { HTMLElement } from './html-parser.ts'
 
@@ -193,6 +195,10 @@ export async function* crawl(
         if (spider && (ignorePageNofollow?.(pathname) || shouldCrawlLinks(dom.elements))) {
           enqueue(extractLinkPaths(dom.elements, pathname), pathname)
         }
+      } else if (isScript(response)) {
+        let cloned = response.clone()
+        results.push({ pathname, filepath: pathname, response })
+        enqueue(await extractImportPaths(await cloned.text(), pathname), pathname)
       } else {
         results.push({ pathname, filepath: pathname, response })
       }
@@ -203,6 +209,43 @@ export async function* crawl(
       bump()
     }
   }
+}
+
+/** Whether a response is JavaScript, and so worth reading for imports. */
+function isScript(response: Response): boolean {
+  let contentType = response.headers.get('Content-Type') ?? ''
+  return contentType.includes('javascript') || contentType.includes('ecmascript')
+}
+
+/**
+ * The paths a JavaScript module imports.
+ *
+ * A code-split bundle reaches its shared chunks only through `import` — no HTML mentions them — so
+ * a crawler that reads markup alone stops at the entry chunk and leaves the rest unwritten.
+ * Following imports keeps one rule for the whole site: what is reachable is what gets generated.
+ *
+ * Only static specifiers and dynamic `import()` with a literal argument are followed; there is
+ * nothing to resolve in `import(someVariable)`.
+ */
+async function extractImportPaths(code: string, baseUrl: string): Promise<string[]> {
+  await init
+
+  let imports
+  try {
+    ;[imports] = parseModule(code)
+  } catch {
+    // Not parseable as a module — nothing to follow, and not this function's job to complain.
+    return []
+  }
+
+  return imports
+    .map((entry) => entry.n)
+    .filter((specifier): specifier is string => specifier !== undefined)
+    // Explicitly relative or root-absolute only. A bare specifier is a package name, and
+    // resolving one against the page would invent a path the site never had.
+    .filter((specifier) => /^\.{0,2}\//.test(specifier))
+    .map((specifier) => resolveHref(specifier, baseUrl))
+    .filter((href): href is string => href !== null)
 }
 
 function extractAssetPaths(elements: HTMLElement[], baseUrl: string): string[] {

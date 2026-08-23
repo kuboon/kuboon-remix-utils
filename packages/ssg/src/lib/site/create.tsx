@@ -92,7 +92,7 @@ export async function createSite(
   })))
 
   let skipped: string[] = []
-  let seeds: string[] = []
+  let seeds: string[] = [hrefFor(base, '/')]
   let router = createRouter()
 
   let render = (meta: PageMeta, children: RemixNode) =>
@@ -126,8 +126,6 @@ export async function createSite(
       }
 
       app.get(page.pattern, () => render(meta, page.module.default()))
-      // Seeded rather than left to the crawl: a page nothing links to is still a page.
-      seeds.push(hrefFor(base, page.pattern))
     }
 
     let patterns = new Set(loaded.map((page) => page.pattern))
@@ -135,10 +133,6 @@ export async function createSite(
       installContent(app, mount, source, patterns, render, seeds, base)
     }
   })
-
-  // Every chunk, because the crawler follows `<script src>` and `<a href>` out of HTML but never
-  // an `import` statement inside JavaScript — so a shared chunk is reachable from nothing.
-  seeds.push(...assets.moduleUrls().values())
 
   return { router, assets, base, seeds, skipped }
 }
@@ -178,8 +172,6 @@ function installContent(
       </article>,
     )
   })
-
-  seeds.push(hrefFor(base, mount))
 }
 
 /** The default listing for a content mount, used when the site did not write its own index page. */
