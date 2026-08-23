@@ -54,6 +54,8 @@ describe('prerender', () => {
           body: "import x from './x.tsx'\nexport default x\n",
           type: 'text/javascript',
         },
+        // Reachable only through the import above — nothing in the HTML names it.
+        '/x.tsx': { body: 'export default 1\n', type: 'text/javascript' },
       })
 
       let stats = await prerender({ router, outDir, paths: ['/'] })
@@ -62,6 +64,9 @@ describe('prerender', () => {
       assert.ok(home.includes('<!-- rmx:h:1 -->'), 'preserves hydration comment')
       assert.ok(home.includes('src="/entry.js"'), 'rewrites script src .tsx -> .js')
       assert.ok(home.includes('"moduleUrl":"/assets/app.js"'), 'rewrites inline module URL')
+
+      let imported = await fs.readFile(path.join(outDir, 'x.js'), 'utf-8')
+      assert.ok(imported.includes('export default 1'), 'writes a module reached only by import')
 
       let about = await fs.readFile(path.join(outDir, 'about', 'index.html'), 'utf-8')
       assert.ok(about.includes('about page'), 'writes crawled linked page to <path>/index.html')
