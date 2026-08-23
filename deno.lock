@@ -1,24 +1,20 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@deno/graph@0.110": "0.110.2",
     "jsr:@deno/loader@0.5": "0.5.0",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/encoding@1": "1.0.11",
     "jsr:@std/internal@^1.0.14": "1.0.14",
-    "jsr:@std/testing@1": "1.0.19",
+    "jsr:@std/testing@1": "1.0.20",
     "npm:@libsql/client@~0.17.4": "0.17.4",
     "npm:@modelcontextprotocol/server@2": "2.0.0",
     "npm:@remix-run/assert@0.3": "0.3.0",
     "npm:@remix-run/data-table@0.4": "0.4.0",
     "npm:@remix-run/fetch-router@0.21": "0.21.0",
-    "npm:cjs-module-lexer@^1.4.0": "1.4.3",
-    "npm:es-module-lexer@^1.7.0": "1.7.0"
+    "npm:cjs-module-lexer@^2.2.1": "2.2.1",
+    "npm:es-module-lexer@^2.3.2": "2.3.2"
   },
   "jsr": {
-    "@deno/graph@0.110.2": {
-      "integrity": "9ebc8a4451969ae2650f09da3ea7371dff42f703d68eb3993811ecb814d51995"
-    },
     "@deno/loader@0.5.0": {
       "integrity": "a6d94408de5e6bacac404f8f6963c8b8cc278cfd1a878aa2f06b34a083d6bfee"
     },
@@ -31,8 +27,8 @@
     "@std/internal@1.0.14": {
       "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
     },
-    "@std/testing@1.0.19": {
-      "integrity": "f4236172365b216728dc3cc8b5e80a9f4c33083d1e4ede7613d5b25b4014898e",
+    "@std/testing@1.0.20": {
+      "integrity": "21380ed438672762e4ec549cbf4fe41c5b68f5598773a30b64abe7375513e721",
       "dependencies": [
         "jsr:@std/assert",
         "jsr:@std/internal"
@@ -146,8 +142,8 @@
     "@remix-run/route-pattern@0.24.0": {
       "integrity": "sha512-w0/lhgY40l2GrBQjJIOeYWIuKm1rxlOsc9Hvt+nyydnka0v4aI9Vv0VK4XzLD3aP08JzGtTlxFxwf1PZ8SGdLg=="
     },
-    "@types/node@26.1.1": {
-      "integrity": "sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==",
+    "@types/node@26.2.0": {
+      "integrity": "sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==",
       "dependencies": [
         "undici-types"
       ]
@@ -158,17 +154,17 @@
         "@types/node"
       ]
     },
-    "cjs-module-lexer@1.4.3": {
-      "integrity": "sha512-9z8TZaGM1pfswYeXrUpzPrkx8UnWYdhJclsiYMm6x/w5+nN+8Tf/LnAgfLGQCm59qAOxU8WwHEq2vNwF6i4j+Q=="
+    "cjs-module-lexer@2.2.1": {
+      "integrity": "sha512-Ca8swihM+/4yKecYHY52kgJd300hi2lADU/a1RxNTRe+RJ9jvqQlESpbz9DnG9mowez8qwXHB8qYdIUw9e+F5Q=="
     },
     "detect-libc@2.0.2": {
       "integrity": "sha512-UX6sGumvvqSaXgdKGUsgZWqcUyIXZ/vZTrlRT/iobiKhGL0zL4d3osHj3uqllWJK+i+sixDS/3COVEOFbupFyw=="
     },
-    "es-module-lexer@1.7.0": {
-      "integrity": "sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA=="
+    "es-module-lexer@2.3.2": {
+      "integrity": "sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw=="
     },
-    "js-base64@3.9.1": {
-      "integrity": "sha512-U73qptcvf/HIOauFOmqT3a0mDUp0MYlfd15oqoe9kqZt5XhiXVb+HG09sLvI9PQ9tZIBFS4nlErai8zbWazP0g=="
+    "js-base64@3.9.3": {
+      "integrity": "sha512-uwYQp+VJ38FVvtim6qNbit6e9uT6dwWQ4Y1+H9TxhW5hcHjpHwoxlR0nMpqUmIFOmu4VqMxwdJA88gIVuZJQ/g=="
     },
     "libsql@0.5.29": {
       "integrity": "sha512-8lMP8iMgiBzzoNbAPQ59qdVcj6UaE/Vnm+fiwX4doX4Narook0a4GPKWBEv+CR8a1OwbfkgL18uBfBjWdF0Fzg==",
@@ -196,24 +192,12 @@
     "undici-types@8.3.0": {
       "integrity": "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="
     },
-    "ws@8.21.1": {
-      "integrity": "sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw=="
+    "ws@8.21.3": {
+      "integrity": "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="
     },
     "zod@4.4.3": {
       "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="
     }
-  },
-  "remote": {
-    "http://localhost:8796/assets/app/entry_cjs.js": "5159e53a4fd7e5a83a030a8825c7f9f9e06192dd03ca4314f8b247bfae1be783",
-    "http://localhost:8796/assets/app/legacy.js": "138f8d6edd4a426b90b5875127d1b935fff435796a4193120cf385c8da4b5034",
-    "http://localhost:8796/assets/app/shared_cjs.js": "1522b055aa7d90a7be296e306fe34bfce96021b23ec30829ca733acac445140d",
-    "http://localhost:8797/assets/app/entry_cjs.js": "02f1ce69b74d1c3afec1ec21f6e0c11440ed59a1507d6d3272a1d14961a54623",
-    "http://localhost:8798/assets/app/entry2.js": "1043e38f46120aa9b74896e0db1a720b9ed9514eda80d74607b75765ede52f07",
-    "http://localhost:8798/assets/npm/debug/src/browser.js": "de4d33943c98bf10d687ba9f5f5ba08731cd65f8f09380617b5aeb2976a9b9fc",
-    "http://localhost:8798/assets/npm/debug/src/common.js": "f97cc0aaa2b7c38455a5515114a231b525f8659fb00a7cc88b32ae611da7c733",
-    "http://localhost:8798/assets/npm/ms/index.js": "8a85e6d938ca1b9816a02a342538ac0c88da257047bb143fdc74b5070151d202",
-    "http://localhost:8799/assets/app/entry.js": "0b60ed59b9770ab80add08d66168457bcc81fe4919db13d83ec45d8e418abac8",
-    "http://localhost:8799/assets/npm/ms/index.js": "44e92799f7d87fffc69ffe8f259d570cf811f99cd324b56c80ee876f4a4acb82"
   },
   "workspace": {
     "members": {
@@ -223,8 +207,8 @@
           "jsr:@std/encoding@1",
           "jsr:@std/testing@1",
           "npm:@remix-run/assert@0.3",
-          "npm:cjs-module-lexer@^1.4.0",
-          "npm:es-module-lexer@^1.7.0"
+          "npm:cjs-module-lexer@^2.2.1",
+          "npm:es-module-lexer@^2.3.2"
         ]
       },
       "packages/data-table-sqlite-turso": {

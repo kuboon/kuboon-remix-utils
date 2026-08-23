@@ -1,6 +1,6 @@
 {
   "name": "@kuboon/remix-assets-deno",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "MIT",
   "exports": "./src/index.ts",
   "imports": {
@@ -8,8 +8,8 @@
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
     "@std/encoding": "jsr:@std/encoding@^1",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
-    "cjs-module-lexer": "npm:cjs-module-lexer@^1.4.0",
-    "es-module-lexer": "npm:es-module-lexer@^1.7.0"
+    "cjs-module-lexer": "npm:cjs-module-lexer@^2.2.1",
+    "es-module-lexer": "npm:es-module-lexer@^2.3.2"
   },
   "tasks": {
     "test": "deno test --allow-read --allow-write --allow-env --allow-net --unstable-bundle",
