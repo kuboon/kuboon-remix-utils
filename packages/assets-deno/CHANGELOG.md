@@ -2,6 +2,14 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.4.2
+
+- Internals use `Deno.bundle`'s own types again, called directly rather than through a hand-written interface and a cast. The unstable bundler API will change; with its real types a signature change fails this package's type check, where a structural copy would have accepted a stale option name and silently dropped it.
+- `BundleMessage` stays declared here rather than aliased to `Deno.bundle.Message`, for the one place it is public API: `BundleError.messages`. A consumer reading `error.messages[0].text` resolves that type under their own `compilerOptions.lib`, and a pinned `lib` would otherwise force them to add `deno.unstable` to read a diagnostic.
+- The package's `lib` pin gains `deno.unstable`, stating outright that this package builds on an unstable Deno API.
+
+Note on what makes `Deno.bundle`'s types visible, since 0.4.0's notes had it wrong: it is the `compilerOptions.lib` pin, not the `--unstable-bundle` flag. Pinning `lib` replaces Deno's default set, which includes the unstable declarations. It also does not reach consumers — Deno type-checks local and workspace dependencies, never `jsr:`/`npm:`/`http:` ones — so a package's use of unstable types is invisible from a JSR install either way. The `--unstable-bundle` opt-in remains required at _runtime_.
+
 ## 0.4.1
 
 - Updated `es-module-lexer` to 2.x and `cjs-module-lexer` to 2.x. Both are internal — no exported type mentions them — and the CommonJS interop suite that exercises them (detection, `require()` collection, named-export detection, and a wrapped module actually running) passes unchanged.

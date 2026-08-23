@@ -35,6 +35,21 @@ import * as path from 'node:path'
 import { PathRegistry, toJsExtension } from './paths.ts'
 import type { ServedModule, ServerState } from './state.ts'
 
+/**
+ * A bundler diagnostic, declared here rather than aliased to `Deno.bundle.Message`.
+ *
+ * This one type is part of the public surface — `BundleError.messages` — and a consumer reading
+ * `error.messages[0].text` resolves it under *their* `compilerOptions.lib`. Pinning `lib`
+ * explicitly replaces Deno's default set, which drops the unstable declarations, so naming
+ * `Deno.bundle.Message` here would make a pinned consumer add `deno.unstable` just to read a
+ * diagnostic. Everything internal uses `Deno.bundle`'s own types, so a change to that unstable API
+ * fails this package's type check rather than drifting silently.
+ */
+export interface BundleMessage {
+  text: string
+  location?: { file: string; line: number; column: number } | null
+}
+
 /** Bundle-mode tuning. Ignored in `'modules'` mode. */
 export interface BundleModeOptions {
   /** Minify the output. Defaults to `true` — the reason to bundle at all is bytes on the wire. */
@@ -61,9 +76,9 @@ export interface BuildBundleOptions {
 export class BundleError extends Error {
   override name = 'BundleError'
   /** The bundler's own diagnostics, empty when the bundler could not be reached at all. */
-  messages: Deno.bundle.Message[]
+  messages: BundleMessage[]
 
-  constructor(message: string, messages: Deno.bundle.Message[] = []) {
+  constructor(message: string, messages: BundleMessage[] = []) {
     super(message)
     this.messages = messages
   }
@@ -82,10 +97,12 @@ export async function buildBundle(
   rootDir: string,
   basePath: string,
 ): Promise<ServerState> {
+  // The runtime API — unlike its types — really is absent without the unstable opt-in.
   if (typeof Deno.bundle !== 'function') {
     throw new BundleError(
-      'Deno.bundle is unavailable. Bundled mode needs the --unstable-bundle flag ' +
-        '(e.g. `deno run --unstable-bundle -A server.ts`), or use mode: "modules" instead.',
+      "Deno.bundle is unavailable. Bundled mode needs Deno's bundle API enabled, either with the " +
+        '--unstable-bundle flag or `"unstable": ["bundle"]` in the deno.json the process started ' +
+        'with. Otherwise use mode: "modules".',
     )
   }
 
@@ -197,7 +214,7 @@ function contentTypeFor(relativePath: string): string {
   return 'text/javascript; charset=utf-8'
 }
 
-function formatMessages(messages: Deno.bundle.Message[]): string {
+function formatMessages(messages: BundleMessage[]): string {
   return messages
     .map((message) => {
       let where = message.location

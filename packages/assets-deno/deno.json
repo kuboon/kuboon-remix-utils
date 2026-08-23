@@ -1,7 +1,15 @@
 {
   "name": "@kuboon/remix-assets-deno",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "license": "MIT",
+  "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "deno.unstable",
+      "dom",
+      "esnext"
+    ]
+  },
   "exports": "./src/index.ts",
   "imports": {
     "@deno/loader": "jsr:@deno/loader@^0.5.0",
