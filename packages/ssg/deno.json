@@ -1,21 +1,47 @@
 {
   "name": "@kuboon/remix-ssg",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
-    "./node": "./src/node.ts"
+    "./node": "./src/node.ts",
+    "./site": "./src/site.ts",
+    "./client": "./src/client.ts",
+    "./build.ts": "./src/build.ts",
+    "./dev.ts": "./src/dev.ts"
   },
   "imports": {
+    "@kuboon/remix-assets-deno": "jsr:@kuboon/remix-assets-deno@^0.4.2",
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
-    "@std/testing/bdd": "jsr:@std/testing@^1/bdd"
+    "@std/cli/parse-args": "jsr:@std/cli@^1/parse-args",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+    "remix": "npm:remix@3.0.0-beta.5"
   },
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-env",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-net --unstable-bundle",
     "check": "deno check src"
   },
   "publish": {
-    "include": ["src", "README.md", "LICENSE", "deno.json"],
-    "exclude": ["**/*.test.ts"]
+    "include": [
+      "src",
+      "README.md",
+      "LICENSE",
+      "deno.json"
+    ],
+    "exclude": [
+      "**/*.test.ts",
+      "**/__fixtures__"
+    ]
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "remix/ui",
+    "lib": [
+      "deno.ns",
+      "deno.unstable",
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ]
   }
 }

@@ -123,6 +123,150 @@ Returns `{ pages, assets, files }`.
 
 Writes one `CrawlResult` to disk under `outDir` (the Node-specific half of `toOutput`), returning the absolute path written or `null` when skipped.
 
+## The site framework
+
+`crawl` and `toOutput` are the primitives. `@kuboon/remix-ssg/site` is the whole static site built
+on them, so a project holds its content and nothing else.
+
+```
+my-site/
+  deno.json           # imports, tasks, permission sets
+  site.config.ts      # title, nav, content sources
+  routes/
+    index.tsx         # /
+    about.tsx         # /about
+  content/
+    mod.ts            # your Markdown (or anything) handling lives here
+    hello.md
+  islands/
+    counter.tsx       # a hydrated island
+    store.ts          # a helper the islands share — not an entrypoint
+  static/
+    styles.css  favicon.svg
+```
+
+```sh
+deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
+deno run -c deno.json -P=dev   jsr:@kuboon/remix-ssg/dev.ts
+```
+
+> [!IMPORTANT]
+> `-c deno.json` is not optional. A remote main module picks up a project's config only when it is
+> named, and both the permission set and `"unstable": ["bundle"]` come from there. That is also
+> what lets the commands run without `-A`.
+
+```jsonc
+// deno.json
+{
+  "tasks": {
+    "build": "deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts",
+    "dev": "deno run -c deno.json -P=dev jsr:@kuboon/remix-ssg/dev.ts"
+  },
+  "unstable": ["bundle"],
+  "permissions": {
+    "build": {
+      "read": ["."],
+      "write": ["dist"],
+      "env": { "allow": ["BASE_URL"], "ignore": ["NODE_ENV"] },
+      "import": true
+    },
+    "dev": { "read": ["."], "env": { "allow": ["BASE_URL", "PORT"] }, "net": true, "import": true }
+  },
+  "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "remix/ui" }
+}
+```
+
+### Pages
+
+A file under `routes/` is a page; its path is its route. `index.tsx` names its own directory, so
+`routes/index.tsx` is `/` and `routes/blog/index.tsx` is `/blog`.
+
+```tsx
+import type { PageMeta } from '@kuboon/remix-ssg/site'
+import { Counter } from '../islands/counter.tsx'
+
+export const meta: PageMeta = { title: 'Home', hydrate: true }
+
+export default function Home() {
+  return (
+    <>
+      <h1>Hello</h1>
+      <Counter />
+    </>
+  )
+}
+```
+
+`hydrate` is opt-in: a page without it ships no JavaScript at all.
+
+### Islands
+
+An island is a component in `islands/`, declared with `island(name, exportName, component)`.
+
+```tsx
+import { island } from '@kuboon/remix-ssg/client'
+
+export const Counter = island('counter', 'Counter', function Counter(handle) {
+  return () => <button>…</button>
+})
+```
+
+Every island goes into a **single** `Deno.bundle({ codeSplitting: true })` call, so a module more
+than one of them imports — the Remix UI runtime, a store they share — is emitted once into a chunk
+they all load. Compiling each entry on its own is what turns a module-level singleton into one
+instance per island; this never does that.
+
+The client runtime starts from that shared chunk, which is why a site declares no runtime
+entrypoint. Ids are logical names rather than URLs (`island:counter#Counter`) because an id is
+evaluated in the browser too, and the server embeds the name-to-chunk map the bundler produced.
+
+### Content
+
+The framework never sees Markdown. A content source hands over entries whose bodies are already
+rendered, so the format — and its dependencies — stay yours:
+
+```ts
+// content/mod.ts
+import type { ContentEntry } from '@kuboon/remix-ssg/site'
+
+export async function list(): Promise<ContentEntry[]> {/* read ./*.md */}
+export async function get(slug: string): Promise<ContentEntry | null> {/* … */}
+```
+
+```ts
+// site.config.ts
+import { defineSite } from '@kuboon/remix-ssg/site'
+import * as blog from './content/mod.ts'
+
+export default defineSite({
+  title: 'my site',
+  nav: [{ href: '/', label: 'Home' }, { href: '/blog', label: 'Blog' }],
+  content: { '/blog': blog },
+})
+```
+
+`site.config.ts` is the only project file the CLI imports by path, which is what keeps a content
+source's types intact — a directory the CLI globbed and imported would arrive as `any`.
+
+### Growing a server later
+
+The same router is crawled by `build.ts` and served by `dev.ts`, so moving from a static deploy to
+a live server changes the deploy target, not the code. For the step after that, a page can declare
+itself request-dependent:
+
+```tsx
+export const meta: PageMeta = { title: 'Account', dynamic: true }
+```
+
+The static build answers `204` and writes nothing for it, rather than freezing one request's answer
+into a file every visitor then gets. Served live, it renders normally.
+
+### Base paths
+
+`BASE_URL` (or `--base`) mounts the whole site under a path prefix, as a GitHub Pages project site
+or a per-PR preview needs. Links and asset URLs carry the prefix; the build strips it back off when
+writing, so the output always lands at the root of `dist/`.
+
 ## Related Packages
 
 - [`fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router) - The router you prerender
