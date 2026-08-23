@@ -35,6 +35,51 @@ import * as path from 'node:path'
 import { PathRegistry, toJsExtension } from './paths.ts'
 import type { ServedModule, ServerState } from './state.ts'
 
+/**
+ * The slice of `Deno.bundle` this module uses, declared structurally.
+ *
+ * `Deno.bundle`'s own types only exist when the process was type-checked with `--unstable-bundle`,
+ * and a consumer of this package should not have to enable an unstable flag just to type-check
+ * their own code. So the API is described here and reached through a cast.
+ */
+interface BundleApi {
+  (options: {
+    entrypoints: string[]
+    outputDir?: string
+    write?: boolean
+    format?: 'esm' | 'cjs' | 'iife'
+    codeSplitting?: boolean
+    platform?: 'browser' | 'deno'
+    minify?: boolean
+    keepNames?: boolean
+    external?: string[]
+    sourcemap?: 'linked' | 'inline' | 'external'
+  }): Promise<BundleResult>
+}
+
+interface BundleResult {
+  success: boolean
+  errors: BundleMessage[]
+  warnings: BundleMessage[]
+  outputFiles?: BundleOutputFile[]
+}
+
+/** One output file the bundler produced, kept in memory. */
+interface BundleOutputFile {
+  /** Absolute path the file *would* have been written to. */
+  path: string
+  /** Content hash, reused as the `ETag`. */
+  hash: string
+  /** The file's contents. */
+  text(): string
+}
+
+/** A diagnostic from the bundler. */
+export interface BundleMessage {
+  text: string
+  location?: { file: string; line: number; column: number } | null
+}
+
 /** Bundle-mode tuning. Ignored in `'modules'` mode. */
 export interface BundleModeOptions {
   /** Minify the output. Defaults to `true` — the reason to bundle at all is bytes on the wire. */
@@ -61,9 +106,9 @@ export interface BuildBundleOptions {
 export class BundleError extends Error {
   override name = 'BundleError'
   /** The bundler's own diagnostics, empty when the bundler could not be reached at all. */
-  messages: Deno.bundle.Message[]
+  messages: BundleMessage[]
 
-  constructor(message: string, messages: Deno.bundle.Message[] = []) {
+  constructor(message: string, messages: BundleMessage[] = []) {
     super(message)
     this.messages = messages
   }
@@ -82,7 +127,8 @@ export async function buildBundle(
   rootDir: string,
   basePath: string,
 ): Promise<ServerState> {
-  if (typeof Deno.bundle !== 'function') {
+  let bundle = (Deno as { bundle?: BundleApi }).bundle
+  if (typeof bundle !== 'function') {
     throw new BundleError(
       'Deno.bundle is unavailable. Bundled mode needs the --unstable-bundle flag ' +
         '(e.g. `deno run --unstable-bundle -A server.ts`), or use mode: "modules" instead.',
@@ -109,7 +155,7 @@ export async function buildBundle(
   let tuning = options.bundle ?? {}
   let sourcemap = tuning.sourcemap ?? 'linked'
 
-  let result = await Deno.bundle({
+  let result = await bundle({
     entrypoints: entryPaths.map((entry) => entry.filePath),
     outputDir,
     write: false,
@@ -197,7 +243,7 @@ function contentTypeFor(relativePath: string): string {
   return 'text/javascript; charset=utf-8'
 }
 
-function formatMessages(messages: Deno.bundle.Message[]): string {
+function formatMessages(messages: BundleMessage[]): string {
   return messages
     .map((message) => {
       let where = message.location

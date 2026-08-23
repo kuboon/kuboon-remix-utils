@@ -2,6 +2,11 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.4.2
+
+- Fixed: the package no longer references `Deno.bundle`'s own types. Those exist only when the process was type-checked with `--unstable-bundle`, so `BundleError.messages` — public API — could not be type-checked by a consumer that had not enabled an unstable flag. The bundler API this module uses is now declared structurally as `BundleMessage` (exported) and reached through a cast. This was meant to ship in 0.4.0 and was left out by mistake.
+- The package's own `deno check` now runs under an explicit `lib` (`deno.ns`, `dom`, `esnext`), which is what a consumer sees. Referencing an unstable-only global from a type position fails the check instead of reaching a release.
+
 ## 0.4.1
 
 - Updated `es-module-lexer` to 2.x and `cjs-module-lexer` to 2.x. Both are internal — no exported type mentions them — and the CommonJS interop suite that exercises them (detection, `require()` collection, named-export detection, and a wrapped module actually running) passes unchanged.
