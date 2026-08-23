@@ -1,17 +1,14 @@
 /**
  * `deno run -c deno.json -P=dev jsr:@kuboon/remix-ssg/dev.ts`
  *
- * Serves the site in the current directory, from the same router the build crawls — so what you
- * see locally is what gets generated.
- *
- * Pages marked `dynamic` render normally here; only the static build skips them. That is the
- * migration path: when a page starts needing the request, it keeps working the moment this router
- * is served for real instead of prerendered.
+ * Serves the site in the current directory, from the same handler the build crawls — so what you
+ * see locally is what gets generated, and moving to a real server later is a change of deploy
+ * target rather than of code.
  */
 
 import { parseArgs } from '@std/cli/parse-args'
 
-import { createSite } from './lib/site/create.tsx'
+import { assembleSite } from './lib/site/assemble.ts'
 import { loadSiteConfig } from './lib/site/load.ts'
 
 if (import.meta.main) {
@@ -34,21 +31,11 @@ Options:
     Deno.exit(0)
   }
 
-  let { config, rootDir } = await loadSiteConfig(args.root ?? Deno.cwd())
-  let site = await createSite(config, {
-    rootDir,
-    mode: 'serve',
-    base: args.base === undefined ? undefined : basePathOf(args.base),
-  })
+  let { definition, rootDir } = await loadSiteConfig(args.root ?? Deno.cwd())
+  let site = await assembleSite(definition, { rootDir, base: args.base, minify: false })
 
   let port = Number(args.port ?? Deno.env.get('PORT') ?? 8000)
-  Deno.serve({ port }, (request) => site.router.fetch(request))
+  Deno.serve({ port }, (request) => site.fetch(request))
 
-  console.log(`Dev server: http://localhost:${port}${site.base}/`)
-}
-
-function basePathOf(value: string): string {
-  if (value === '') return ''
-  if (/^https?:\/\//.test(value)) return new URL(value).pathname.replace(/\/+$/, '')
-  return `/${value.replace(/^\/+/, '').replace(/\/+$/, '')}`
+  console.log(`Dev server: http://localhost:${port}${site.base || '/'}`)
 }

@@ -3,8 +3,8 @@
  *
  * Builds the site in the current directory into `dist/`.
  *
- * Run it with `-c deno.json`: the config only reaches a remote main module when it is named
- * explicitly, and both the permission set and `"unstable": ["bundle"]` come from it.
+ * Run it with `-c deno.json`: a remote main module picks up a project's config only when it is
+ * named, and both the permission set and `"unstable": ["bundle"]` come from there.
  */
 
 import { parseArgs } from '@std/cli/parse-args'
@@ -34,23 +34,12 @@ Options:
   let stats = await buildSite({
     rootDir: args.root,
     outDir: args.out,
-    base: args.base === undefined ? undefined : basePathOf(args.base),
+    base: args.base,
     onFile: (file) => console.log(`  ${file}`),
   })
-
-  for (let pattern of stats.skipped) {
-    console.log(`  (skipped ${pattern} — marked dynamic)`)
-  }
 
   console.log(
     `\n✓ Wrote ${stats.pages} page(s) and ${stats.assets} asset(s) to ${stats.outDir}` +
       (stats.base ? ` (base: ${stats.base})` : ''),
   )
-}
-
-/** Accepts either a full URL or a bare path prefix, since deploy workflows pass the former. */
-function basePathOf(value: string): string {
-  if (value === '') return ''
-  if (/^https?:\/\//.test(value)) return new URL(value).pathname.replace(/\/+$/, '')
-  return `/${value.replace(/^\/+/, '').replace(/\/+$/, '')}`
 }

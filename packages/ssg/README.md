@@ -125,22 +125,21 @@ Writes one `CrawlResult` to disk under `outDir` (the Node-specific half of `toOu
 
 ## The site framework
 
-`crawl` and `toOutput` are the primitives. `@kuboon/remix-ssg/site` is the whole static site built
-on them, so a project holds its content and nothing else.
+`crawl` and `toOutput` are the primitives. `@kuboon/remix-ssg/site` is the assembly around them, so
+a project holds its content and nothing else.
 
 ```
 my-site/
-  deno.json           # imports, tasks, permission sets
-  site.config.ts      # title, nav, content sources
-  routes/
-    index.tsx         # /
-    about.tsx         # /about
-  content/
-    mod.ts            # your Markdown (or anything) handling lives here
-    hello.md
+  deno.json            # imports, tasks, permission sets
+  site.config.ts       # transforms and entry points
+  layout.tsx           # yours — the framework has no document shell
+  transforms/
+    markdown.tsx       # yours — the framework never sees Markdown
+  pages/
+    index.md  about.md  blog/hello.md
   islands/
-    counter.tsx       # a hydrated island
-    store.ts          # a helper the islands share — not an entrypoint
+    counter.tsx        # a hydrated island
+    store.ts           # a helper the islands share — not an entrypoint
   static/
     styles.css  favicon.svg
 ```
@@ -152,56 +151,69 @@ deno run -c deno.json -P=dev   jsr:@kuboon/remix-ssg/dev.ts
 
 > [!IMPORTANT]
 > `-c deno.json` is not optional. A remote main module picks up a project's config only when it is
-> named, and both the permission set and `"unstable": ["bundle"]` come from there. That is also
-> what lets the commands run without `-A`.
+> named, and both the permission set and `"unstable": ["bundle"]` come from there. That is also what
+> lets these run without `-A`.
 
-```jsonc
-// deno.json
-{
-  "tasks": {
-    "build": "deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts",
-    "dev": "deno run -c deno.json -P=dev jsr:@kuboon/remix-ssg/dev.ts"
-  },
-  "unstable": ["bundle"],
-  "permissions": {
-    "build": {
-      "read": ["."],
-      "write": ["dist"],
-      "env": { "allow": ["BASE_URL"], "ignore": ["NODE_ENV"] },
-      "import": true
-    },
-    "dev": { "read": ["."], "env": { "allow": ["BASE_URL", "PORT"] }, "net": true, "import": true }
-  },
-  "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "remix/ui" }
+### Three directories, one handler
+
+`islands/` is compiled as a single code-split graph. `pages/` is served through the site's
+transforms. `static/` is served verbatim. They compose into one `fetch` — the build crawls it, the
+dev server serves it — so moving from a static deploy to a live server is a change of deploy target
+rather than of code.
+
+Everything in the pipeline satisfies the same contract, so a site can add to it:
+
+```ts
+interface SiteMiddleware {
+  readonly basePath: string
+  fetch(request: Request): Promise<Response>
+  paths(): Iterable<string>
+  reload(): Promise<void>
 }
 ```
 
-### Pages
+### Transforms
 
-A file under `routes/` is a page; its path is its route. `index.tsx` names its own directory, so
-`routes/index.tsx` is `/` and `routes/blog/index.tsx` is `/blog`.
+A transform claims the files it renders and says where they are served. This is where Markdown —
+or any other format — is handled, which is what keeps it and its dependencies out of this package.
 
-```tsx
-import type { PageMeta } from '@kuboon/remix-ssg/site'
-import { Counter } from '../islands/counter.tsx'
-
-export const meta: PageMeta = { title: 'Home', hydrate: true }
-
-export default function Home() {
-  return (
-    <>
-      <h1>Hello</h1>
-      <Counter />
-    </>
-  )
+```ts
+export function markdown(
+  context: { base: string; islandUrls: Record<string, string> },
+): FileTransform {
+  return {
+    match: (file) => file.endsWith('.md'),
+    path: (file) =>
+      `/${file.replace(/\.md$/, '').replace(/(^|\/)index$/, '')}`.replace(/\/$/, '') || '/',
+    render: async (absolutePath) => ({
+      body: /* your HTML */ '',
+      contentType: 'text/html; charset=utf-8',
+    }),
+  }
 }
 ```
 
-`hydrate` is opt-in: a page without it ships no JavaScript at all.
+A transform decides a route from the file's path alone. The tree needs every route before rendering
+anything, and a route that depended on a file's contents would make what a site serves impossible
+to see by looking at it.
+
+### The config
+
+```ts
+import { defineSite } from '@kuboon/remix-ssg/site'
+import { markdown } from './transforms/markdown.tsx'
+
+export default defineSite(({ base, islandUrls }) => ({
+  transforms: [markdown({ base, islandUrls })],
+  entryPoints: ['/'],
+}))
+```
+
+Islands are compiled before the config is built, so a layout can be handed `islandUrls` — the map
+from an island's name to the chunk the bundler emitted. It comes from the bundler rather than a
+convention because output names shift with the set of entrypoints.
 
 ### Islands
-
-An island is a component in `islands/`, declared with `island(name, exportName, component)`.
 
 ```tsx
 import { island } from '@kuboon/remix-ssg/client'
@@ -216,56 +228,23 @@ than one of them imports — the Remix UI runtime, a store they share — is emi
 they all load. Compiling each entry on its own is what turns a module-level singleton into one
 instance per island; this never does that.
 
-The client runtime starts from that shared chunk, which is why a site declares no runtime
-entrypoint. Ids are logical names rather than URLs (`island:counter#Counter`) because an id is
-evaluated in the browser too, and the server embeds the name-to-chunk map the bundler produced.
+The client runtime starts from that shared chunk, so a site declares no runtime entrypoint. An
+island's id is a logical name (`island:counter#Counter`) rather than a URL, because an id is
+evaluated in the browser too; the layout embeds the name-to-chunk map under
+`ISLAND_MAP_ELEMENT_ID` and the runtime resolves against it.
 
-### Content
+### What gets generated
 
-The framework never sees Markdown. A content source hands over entries whose bodies are already
-rendered, so the format — and its dependencies — stay yours:
-
-```ts
-// content/mod.ts
-import type { ContentEntry } from '@kuboon/remix-ssg/site'
-
-export async function list(): Promise<ContentEntry[]> {/* read ./*.md */}
-export async function get(slug: string): Promise<ContentEntry | null> {/* … */}
-```
-
-```ts
-// site.config.ts
-import { defineSite } from '@kuboon/remix-ssg/site'
-import * as blog from './content/mod.ts'
-
-export default defineSite({
-  title: 'my site',
-  nav: [{ href: '/', label: 'Home' }, { href: '/blog', label: 'Blog' }],
-  content: { '/blog': blog },
-})
-```
-
-`site.config.ts` is the only project file the CLI imports by path, which is what keeps a content
-source's types intact — a directory the CLI globbed and imported would arrive as `any`.
-
-### Growing a server later
-
-The same router is crawled by `build.ts` and served by `dev.ts`, so moving from a static deploy to
-a live server changes the deploy target, not the code. For the step after that, a page can declare
-itself request-dependent:
-
-```tsx
-export const meta: PageMeta = { title: 'Account', dynamic: true }
-```
-
-The static build answers `204` and writes nothing for it, rather than freezing one request's answer
-into a file every visitor then gets. Served live, it renders normally.
+The crawl starts at `entryPoints` and follows links — including `import` inside JavaScript, which
+is how a code-split bundle's shared chunks are reached. **What is reachable is what gets
+generated**: a page nothing links to belongs in `entryPoints`, or it is not part of the site.
 
 ### Base paths
 
 `BASE_URL` (or `--base`) mounts the whole site under a path prefix, as a GitHub Pages project site
-or a per-PR preview needs. Links and asset URLs carry the prefix; the build strips it back off when
-writing, so the output always lands at the root of `dist/`.
+or a per-PR preview needs. Both a full URL and a bare prefix are accepted. Links and asset URLs
+carry the prefix; the build strips it back off when writing, so output always lands at the root of
+`dist/`.
 
 ## Related Packages
 

@@ -4,24 +4,22 @@ This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-u
 
 ## 0.4.0
 
-- Added `@kuboon/remix-ssg/site` and two CLI entries, `build.ts` and `dev.ts`, which together take over everything a static site would otherwise hand-write: the deploy-prefix mount, the document shell, static file serving, client bundling, and the crawl. A site keeps `site.config.ts` and three directories — `routes/`, `islands/`, `static/` — plus whatever its content sources need.
+- Added `@kuboon/remix-ssg/site` and two CLI entries, `build.ts` and `dev.ts`. Three directories compose into one handler: `islands/` compiled as a single code-split graph, `pages/` served through the site's own transforms, `static/` served verbatim. The build crawls that handler and the dev server serves it, so moving from a static deploy to a live server is a change of deploy target rather than of code.
 
   ```sh
   deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
   deno run -c deno.json -P=dev   jsr:@kuboon/remix-ssg/dev.ts
   ```
 
-  Pass `-c deno.json`: a remote main module only picks up a project's config when it is named, and both the permission set and `"unstable": ["bundle"]` come from there — so neither `-A` nor `--unstable-bundle` belongs on the command line.
+  Pass `-c deno.json`: a remote main module picks up a project's config only when it is named, and both the permission set and `"unstable": ["bundle"]` come from there — so neither `-A` nor `--unstable-bundle` belongs on the command line.
 
-- Added `@kuboon/remix-ssg/client` with `island()`, the browser half. Islands are compiled as one code-split graph, so a module two of them import is emitted once — and the client runtime starts from the chunk they share rather than from a separate entrypoint a site would have to declare.
+- What the framework deliberately does not have: a content model, a document shell, a route table. A `FileTransform` claims the files it renders and says where they are served, and it comes from the site — which is what keeps Markdown, or any other format, and its dependencies out of this package. The layout is the site's too.
 
-- An island's `clientEntry()` id is a logical name (`island:counter#Counter`), not a URL. Ids are evaluated in the browser too, where predicting the bundler's output naming is guesswork — it shifts with the set of entrypoints. The server embeds the name-to-chunk map it got from the bundler instead.
+- `SiteMiddleware` names the contract everything in the pipeline satisfies — mount point, fetch, what it serves, rebuild — which `@kuboon/remix-assets-deno`'s asset server already had. `compose` treats a `404` as "not mine" and passes it along, so pages and islands share a site without knowing about each other.
 
-- Content is format-agnostic: a site's content source hands over `ContentEntry` objects whose bodies are already rendered, so Markdown — or anything else — stays the site's own business, along with its dependencies.
+- `crawl` now follows `import` out of JavaScript responses. A code-split bundle reaches its shared chunks only that way, and seeding them separately was a special case standing in for what crawling is for. One rule covers the site: what is reachable from the entry points is what gets generated.
 
-- Pages and islands are `.tsx`. A `.ts` module in `routes/` or `islands/` is a helper, not a page and not an entrypoint.
-
-- A page marked `dynamic` answers `204` in the static build and renders normally when served, so a request-dependent page does not silently bake one visitor's answer into a file.
+- Added `@kuboon/remix-ssg/client` with `island()`. Islands are compiled as one graph, so a module two of them import is emitted once — and the client runtime starts from the chunk they share rather than from a runtime entrypoint a site would have to declare. An island's id is a logical name rather than a URL, because ids are evaluated in the browser too, where predicting the bundler's output naming is guesswork.
 
 - The framework's exports depend on `remix` and `@kuboon/remix-assets-deno`. Importing `@kuboon/remix-ssg` for `crawl`/`toOutput` does not enter those module graphs, so a crawl-only consumer fetches nothing new.
 

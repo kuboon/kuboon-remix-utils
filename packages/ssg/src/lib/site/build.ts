@@ -1,16 +1,16 @@
 /**
- * The static build: drive the router, write what comes back.
+ * The static build: drive the handler, write what comes back.
  *
  * The base path is the whole reason this is not just `prerender`. Under a sub-path deploy every
- * route and link carries the prefix, but the files still have to land at the output root — so each
- * output path gets the prefix stripped back off on the way to disk.
+ * URL carries the prefix, but the files still have to land at the output root — so each output
+ * path gets the prefix stripped back off on the way to disk.
  */
 
 import * as path from 'node:path'
 
 import { crawl } from '../crawl.ts'
 import { toOutput } from '../output.ts'
-import { createSite } from './create.tsx'
+import { assembleSite } from './assemble.ts'
 import { loadSiteConfig } from './load.ts'
 
 /** Options for {@link buildSite}. */
@@ -19,7 +19,7 @@ export interface BuildOptions {
   rootDir?: string
   /** Output directory, relative to the root. Defaults to `dist`. */
   outDir?: string
-  /** Deploy path prefix. Defaults to `BASE_URL`'s pathname. */
+  /** Deploy path prefix or full URL. Defaults to `BASE_URL`. */
   base?: string
   /** Called once per written file. */
   onFile?: (relativePath: string) => void
@@ -33,8 +33,6 @@ export interface BuildStats {
   assets: number
   /** Deploy path prefix the site was built for. */
   base: string
-  /** Route patterns skipped because they are marked `dynamic`. */
-  skipped: string[]
   /** Absolute path of the output directory. */
   outDir: string
 }
@@ -42,12 +40,15 @@ export interface BuildStats {
 /**
  * Builds a site into static files.
  *
+ * Starts from the configured entry points and follows links, so what is reachable is what gets
+ * generated — including the shared chunks a code-split bundle reaches only through `import`.
+ *
  * @param options Where the site is and where the output goes
  * @returns What was written
  */
 export async function buildSite(options: BuildOptions = {}): Promise<BuildStats> {
-  let { config, rootDir } = await loadSiteConfig(options.rootDir ?? Deno.cwd())
-  let site = await createSite(config, { rootDir, mode: 'static', base: options.base })
+  let { definition, rootDir } = await loadSiteConfig(options.rootDir ?? Deno.cwd())
+  let site = await assembleSite(definition, { rootDir, base: options.base })
   let outDir = path.resolve(rootDir, options.outDir ?? 'dist')
 
   await Deno.remove(outDir, { recursive: true }).catch(() => {})
@@ -55,9 +56,9 @@ export async function buildSite(options: BuildOptions = {}): Promise<BuildStats>
   let pages = 0
   let assets = 0
 
-  for await (let result of crawl(site.router, { paths: site.seeds })) {
+  for await (let result of crawl(site, { paths: site.entryPoints })) {
     let output = await toOutput(result)
-    if (output === null) continue // 204: a dynamic page, skipped on purpose
+    if (output === null) continue
 
     let relative = stripBase(output.path, site.base)
     let destination = path.join(outDir, relative)
@@ -74,7 +75,7 @@ export async function buildSite(options: BuildOptions = {}): Promise<BuildStats>
     options.onFile?.(relative)
   }
 
-  return { pages, assets, base: site.base, skipped: site.skipped, outDir }
+  return { pages, assets, base: site.base, outDir }
 }
 
 /** Drops the deploy prefix from an output path, so files land at the output root. */

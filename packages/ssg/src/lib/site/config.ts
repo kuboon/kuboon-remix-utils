@@ -1,124 +1,79 @@
 /**
- * What a site declares, and the shapes the framework asks of it.
+ * What a site declares.
  *
- * A site's `site.config.ts` is the only module the CLI imports from the project by path, which is
- * deliberate: everything it hands over — content sources above all — arrives with its types intact,
- * where a directory the CLI globbed and dynamically imported would arrive as `any`.
+ * Very little, by design. The framework knows three directories and how to compile islands; it
+ * does not know what a page is made of. A site's transforms decide that, and they are handed the
+ * two things they cannot work out for themselves — the deploy prefix, and where the bundler put
+ * each island.
  */
 
-import type { RemixNode } from 'remix/ui'
+import type { FileTransform } from './file-tree.ts'
 
-/** One piece of content, already rendered. */
-export interface ContentEntry {
-  /** URL segment this entry is served at, under its mount path. */
-  slug: string
-  /** Title, for the page and for an index listing. */
-  title: string
-  /** Publication date, `YYYY-MM-DD`. Used to order an index listing when present. */
-  date?: string
-  /** One-line summary, for an index listing and the page description. */
-  summary?: string
+/** What the framework knows by the time a site's transforms are built. */
+export interface SiteContext {
+  /** Deploy path prefix, without a trailing slash, or `''`. */
+  base: string
   /**
-   * The body, already rendered to a Remix UI tree.
+   * Island name -> public chunk URL.
    *
-   * The framework never sees Markdown — or any other source format. Rendering belongs to the
-   * content source, which is what keeps the format (and its dependencies) a site's own business.
+   * A layout needs this to emit the script tags and the map the client runtime resolves ids
+   * against. It comes from the bundler rather than a convention because output names shift with
+   * the set of entrypoints.
    */
-  body: RemixNode
-}
-
-/**
- * A directory of content, behind the two operations the framework needs.
- *
- * A site implements this in `content/mod.ts` (or anywhere else) with whatever libraries its format
- * calls for.
- */
-export interface ContentSource {
-  /** Every entry. Used for the index listing and to seed the crawl. */
-  list(): Promise<ContentEntry[]> | ContentEntry[]
-  /**
-   * One entry by slug.
-   *
-   * @param slug The URL segment
-   * @returns The entry, or `null` when there is none
-   */
-  get(slug: string): Promise<ContentEntry | null> | ContentEntry | null
-}
-
-/** A link in the site header. */
-export interface NavLink {
-  /** Path, relative to the site root — the deploy prefix is added for you. */
-  href: string
-  /** Link text. */
-  label: string
-}
-
-/** What a page module declares about itself. */
-export interface PageMeta {
-  /** Document title. */
-  title: string
-  /** Meta description. */
-  description?: string
-  /**
-   * Load the client runtime on this page so its islands hydrate. Defaults to `false` — a page with
-   * no islands ships no JavaScript.
-   */
-  hydrate?: boolean
-  /**
-   * This page depends on the request, so it cannot be prerendered.
-   *
-   * The static build skips it rather than baking one request's answer into a file that every
-   * visitor then gets. Serving the same router live renders it normally.
-   */
-  dynamic?: boolean
-}
-
-/** A page module: `routes/about.tsx` exporting `meta` and a default component. */
-export interface PageModule {
-  meta?: PageMeta
-  default: () => RemixNode
+  islandUrls: Record<string, string>
 }
 
 /** A site, as `site.config.ts` declares it. */
 export interface SiteConfig {
-  /** Site title, used as the suffix of every page title. */
-  title: string
-  /** Default meta description. */
-  description?: string
-  /** Header links. */
-  nav?: NavLink[]
   /**
-   * Content sources, as `mount path -> source`. Each mounts an index at its path and an entry page
-   * at `<path>/:slug`.
+   * Transforms for files under `pages/`. Files no transform claims are served verbatim.
+   *
+   * This is where Markdown — or any other format — is handled, which is what keeps it and its
+   * dependencies out of this package.
    */
-  content?: Record<string, ContentSource>
-  /** Extra `<head>` content, rendered into every page. */
-  head?: RemixNode
-  /** Footer content, replacing the default. */
-  footer?: RemixNode
+  transforms?: readonly FileTransform[]
+  /**
+   * Where the crawl starts. Defaults to `['/']`.
+   *
+   * The crawl follows links from here, so what is reachable is what gets generated. A page nothing
+   * links to belongs in this list or it is not part of the site.
+   */
+  entryPoints?: readonly string[]
+  /** Directory names, when the defaults do not fit. */
+  dirs?: {
+    /** Pages, transformed and served at the site root. Defaults to `'pages'`. */
+    pages?: string
+    /** Files served verbatim under `/static`. Defaults to `'static'`. */
+    static?: string
+    /** Client components, compiled as one code-split graph. Defaults to `'islands'`. */
+    islands?: string
+  }
 }
+
+/** A site config, or a function that builds one once the islands are compiled. */
+export type SiteDefinition =
+  | SiteConfig
+  | ((context: SiteContext) => SiteConfig | Promise<SiteConfig>)
 
 /**
  * Declares a site.
  *
- * Identity at runtime — it exists so a config file gets checked against {@link SiteConfig} where it
- * is written, rather than when the CLI loads it.
+ * Identity at runtime — it exists so a config file is checked where it is written rather than when
+ * the CLI loads it.
  *
- * @param config The site
- * @returns The same object
+ * @param definition The site, or a function receiving what the framework already knows
+ * @returns The same value
  *
  * @example
  * ```ts
  * import { defineSite } from '@kuboon/remix-ssg/site'
- * import * as blog from './content/mod.ts'
+ * import { markdown } from './transforms/markdown.ts'
  *
- * export default defineSite({
- *   title: 'my site',
- *   nav: [{ href: '/', label: 'Home' }, { href: '/blog', label: 'Blog' }],
- *   content: { '/blog': blog },
- * })
+ * export default defineSite(({ base, islandUrls }) => ({
+ *   transforms: [markdown({ base, islandUrls })],
+ * }))
  * ```
  */
-export function defineSite(config: SiteConfig): SiteConfig {
-  return config
+export function defineSite(definition: SiteDefinition): SiteDefinition {
+  return definition
 }
