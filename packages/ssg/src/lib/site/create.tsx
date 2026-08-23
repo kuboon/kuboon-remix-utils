@@ -130,7 +130,7 @@ export async function createSite(
 
     let patterns = new Set(loaded.map((page) => page.pattern))
     for (let [mount, source] of Object.entries(config.content ?? {})) {
-      installContent(app, mount, source, patterns, render, seeds, base)
+      installContent(app, mount, source, patterns, render, base)
     }
   })
 
@@ -144,7 +144,6 @@ function installContent(
   source: ContentSource,
   pagePatterns: Set<string>,
   render: (meta: PageMeta, children: RemixNode) => Promise<Response>,
-  seeds: string[],
   base: string,
 ): void {
   // A page file at the same path wins, so a site can write its own index without losing the rest.
