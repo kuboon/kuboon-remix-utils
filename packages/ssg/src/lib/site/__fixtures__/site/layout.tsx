@@ -13,14 +13,13 @@ import { ISLAND_MAP_ELEMENT_ID } from '../../../../client.ts'
 export interface LayoutProps {
   title: string
   base: string
+  /** Name -> chunk URL for the islands this page places. Empty on a page with none. */
   islandUrls: Record<string, string>
-  hydrate: boolean
   children: RemixNode
 }
 
 export function renderPage(props: LayoutProps): Promise<string> {
-  let urls = props.hydrate ? props.islandUrls : {}
-  let chunks = [...new Set(Object.values(urls))]
+  let chunks = [...new Set(Object.values(props.islandUrls))]
   let home = props.base === '' ? '/' : props.base
 
   return renderToString(
@@ -42,7 +41,7 @@ export function renderPage(props: LayoutProps): Promise<string> {
           ? (
             <>
               <script type='application/json' id={ISLAND_MAP_ELEMENT_ID}>
-                {JSON.stringify(urls)}
+                {JSON.stringify(props.islandUrls)}
               </script>
               {chunks.map((src) => <script key={src} type='module' src={src}></script>)}
             </>

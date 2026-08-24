@@ -145,7 +145,20 @@ describe('buildSite', () => {
     let { read, cleanup } = await build()
 
     try {
-      assert.ok(!(await read('about.html')).includes('<script'), 'about has no scripts')
+      assert.ok(!(await read('about.html')).includes('<script'), 'about is Markdown, so it is text')
+    } finally {
+      await cleanup()
+    }
+  })
+
+  it('loads only the chunks a page places', async () => {
+    let { read, cleanup } = await build()
+
+    try {
+      let html = await read('blog/hello.html')
+
+      assert.ok(html.includes('src="/assets/counter.js"'), 'the island it places')
+      assert.ok(!html.includes('total.js'), `not the one it does not, got ${html}`)
     } finally {
       await cleanup()
     }

@@ -16,6 +16,7 @@ import {
 } from '../../../../site.ts'
 import type { FileServerBehavior } from '../../../../site.ts'
 import { markdown } from './transforms/markdown.tsx'
+import { page } from './transforms/page.tsx'
 
 let here = import.meta.dirname!
 
@@ -38,7 +39,7 @@ export default serveAsHost(
     await createFileTree({
       rootDir: `${here}/pages`,
       basePath: base,
-      transforms: [markdown({ base, islandUrls: islands.urls })],
+      transforms: [markdown({ base }), page({ base, islandUrls: islands.urls })],
     }),
     await createFileTree({ rootDir: `${here}/static`, basePath: `${base}/static` }),
     islands,

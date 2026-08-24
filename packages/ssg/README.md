@@ -135,8 +135,10 @@ my-site/
   layout.tsx           # yours — the framework has no document shell
   transforms/
     markdown.tsx       # yours — the framework never sees Markdown
+    page.tsx           # yours — .tsx pages, for the ones that need islands
   pages/
-    index.md  about.md  blog/hello.md
+    index.tsx  blog/hello.tsx     # pages that place islands
+    about.md                      # pages that are text
   islands/
     counter.tsx        # a hydrated island
     store.ts           # a helper the islands share — not an entrypoint
@@ -173,6 +175,7 @@ import {
   serveAsHost,
 } from '@kuboon/remix-ssg/site'
 import { markdown } from './transforms/markdown.tsx'
+import { page } from './transforms/page.tsx'
 
 export const base = normalizeBase(Deno.env.get('BASE_URL'))
 export const entryPoints = ['/']
@@ -185,7 +188,7 @@ export default serveAsHost(
     await createFileTree({
       rootDir: 'pages',
       basePath: base,
-      transforms: [markdown({ base, islandUrls: islands.urls })],
+      transforms: [markdown({ base }), page({ base, islandUrls: islands.urls })],
     }),
     await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
     islands,
@@ -221,9 +224,7 @@ A transform claims the files it renders and says where they are served. This is 
 or any other format — is handled, which is what keeps it and its dependencies out of this package.
 
 ```ts
-export function markdown(
-  context: { base: string; islandUrls: Record<string, string> },
-): FileTransform {
+export function markdown(context: { base: string }): FileTransform {
   return {
     match: (file) => file.endsWith('.md'),
     path: (file) =>
@@ -235,6 +236,27 @@ export function markdown(
   }
 }
 ```
+
+Transforms are tried in order, so a site can have more than one format. The fixture has two: `.md`
+for text, and `.tsx` for pages that need an island. A page that wants interactivity is a component
+that imports the island and places it —
+
+```tsx
+export const islands = ['counter']
+
+export default function Hello() {
+  return (
+    <>
+      <p>A nested page.</p>
+      <Counter />
+    </>
+  )
+}
+```
+
+— and its transform hands the layout only the chunks that page names, so `about.md` ships no
+JavaScript and `blog/hello.tsx` ships the counter but not the total. Markdown needs no hydration
+and gets none.
 
 A transform decides a route from the file's path alone. The tree needs every route before rendering
 anything, and a route that depended on a file's contents would make what a site serves impossible
