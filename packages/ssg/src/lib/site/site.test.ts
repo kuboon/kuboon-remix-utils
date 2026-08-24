@@ -57,10 +57,12 @@ describe('buildSite', () => {
     let { files, cleanup } = await build()
 
     try {
+      // `about.html`, not `about/index.html`: GitHub Pages reaches for the former first, so a
+      // site whose links say `/about` costs no redirect.
       assert.ok(files.has('index.html'), 'the entry point itself')
-      assert.ok(files.has('about/index.html'), 'a page linked from it')
-      assert.ok(files.has('blog/hello/index.html'), 'a nested page linked from it')
-      assert.ok(files.has('orphan/index.html'), 'a page linked from nowhere but named an entry')
+      assert.ok(files.has('about.html'), 'a page linked from it')
+      assert.ok(files.has('blog/hello.html'), 'a nested page linked from it')
+      assert.ok(files.has('orphan.html'), 'a page linked from nowhere but named an entry')
     } finally {
       await cleanup()
     }
@@ -143,7 +145,7 @@ describe('buildSite', () => {
     let { read, cleanup } = await build()
 
     try {
-      assert.ok(!(await read('about/index.html')).includes('<script'), 'about has no scripts')
+      assert.ok(!(await read('about.html')).includes('<script'), 'about has no scripts')
     } finally {
       await cleanup()
     }
@@ -154,7 +156,7 @@ describe('buildSite', () => {
 
     try {
       assert.ok(files.has('index.html'), 'output still lands at the root')
-      assert.ok(files.has('orphan/index.html'), 'a prefixed entry point too')
+      assert.ok(files.has('orphan.html'), 'a prefixed entry point too')
       assert.ok([...files].some((file) => file.startsWith('assets/')), 'chunks too')
 
       let html = await read('index.html')

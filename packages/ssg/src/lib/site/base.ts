@@ -49,6 +49,8 @@ export function stripBase(servedPath: string, base: string): string {
   let relative = servedPath.replace(/^\/+/, '')
   if (base === '') return relative
 
-  let prefix = `${base.replace(/^\//, '')}/`
-  return relative.startsWith(prefix) ? relative.slice(prefix.length) : relative
+  // The prefix on its own is the root page, and it carries no trailing slash to cut on.
+  let bare = base.replace(/^\//, '')
+  if (relative === bare) return ''
+  return relative.startsWith(`${bare}/`) ? relative.slice(bare.length + 1) : relative
 }

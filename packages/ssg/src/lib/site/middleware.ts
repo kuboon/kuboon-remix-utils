@@ -36,13 +36,16 @@ export interface SiteMiddleware {
  * A `404` from one is treated as "not mine" and passed along, so a file tree and an asset server
  * can share a mount point without either knowing about the other.
  *
+ * The result is itself a {@link SiteMiddleware}, so it composes further — which is what lets a
+ * host's URL rules wrap the whole site rather than being set on each part.
+ *
  * @param middlewares The middlewares, in priority order
- * @returns A `fetch`-shaped object — what `crawl` drives and what `Deno.serve` serves
+ * @returns One middleware serving all of them
  */
-export function compose(
-  ...middlewares: readonly SiteMiddleware[]
-): { fetch(request: Request): Promise<Response> } {
+export function compose(...middlewares: readonly SiteMiddleware[]): SiteMiddleware {
   return {
+    basePath: '',
+
     async fetch(request: Request): Promise<Response> {
       for (let middleware of middlewares) {
         let response = await middleware.fetch(request)
@@ -53,6 +56,14 @@ export function compose(
         status: 404,
         headers: { 'content-type': 'text/plain; charset=utf-8' },
       })
+    },
+
+    *paths(): Iterable<string> {
+      for (let middleware of middlewares) yield* middleware.paths()
+    },
+
+    async reload(): Promise<void> {
+      for (let middleware of middlewares) await middleware.reload()
     },
   }
 }

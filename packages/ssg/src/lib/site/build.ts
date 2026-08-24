@@ -11,6 +11,7 @@ import * as path from 'node:path'
 import { crawl } from '../crawl.ts'
 import { toOutput } from '../output.ts'
 import { joinBase, normalizeBase, stripBase } from './base.ts'
+import { githubPages, outputPathFor } from './host.ts'
 import type { SiteRouter } from './load.ts'
 
 /** Options for {@link buildSite}. */
@@ -49,18 +50,24 @@ export async function buildSite(
 ): Promise<BuildStats> {
   let base = normalizeBase(router.base)
   let entryPoints = (router.entryPoints ?? ['/']).map((entry) => joinBase(base, entry))
+  let behavior = router.fileServer ?? githubPages()
   let outDir = path.resolve(options.outDir ?? 'dist')
+
+  // The host decides which file answers a URL, so the build writes the file it would reach for
+  // first — and the prefix comes off here, because inside the artifact there is no prefix.
+  let outputPath = (pathname: string) =>
+    outputPathFor(behavior, `/${stripBase(pathname, base)}`).replace(/^\/+/, '')
 
   await Deno.remove(outDir, { recursive: true }).catch(() => {})
 
   let pages = 0
   let assets = 0
 
-  for await (let result of crawl(router.default, { paths: entryPoints })) {
+  for await (let result of crawl(router.default, { paths: entryPoints, outputPath })) {
     let output = await toOutput(result)
     if (output === null) continue
 
-    let relative = stripBase(output.path, base)
+    let relative = output.path
     let destination = path.join(outDir, relative)
     await Deno.mkdir(path.dirname(destination), { recursive: true })
     await Deno.writeFile(

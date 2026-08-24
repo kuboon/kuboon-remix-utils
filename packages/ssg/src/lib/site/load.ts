@@ -9,6 +9,8 @@
 
 import * as path from 'node:path'
 
+import type { FileServerBehavior } from './host.ts'
+
 /**
  * What the build reads from a site's `router.ts`.
  *
@@ -40,6 +42,13 @@ export interface SiteRouter {
    * links to belongs in this list or it is not part of the site.
    */
   entryPoints?: readonly string[]
+  /**
+   * The host's URL-to-file rule, deciding where each page is written. Defaults to `githubPages()`.
+   *
+   * The same object belongs in `serveAsHost` so the dev server resolves URLs the way the deploy
+   * will.
+   */
+  fileServer?: FileServerBehavior
 }
 
 /** Router file names tried, in order. */

@@ -164,22 +164,33 @@ dev server.
 Nothing here is a convention — the site says what it wants served, in order:
 
 ```ts
-import { compose, createFileTree, createIslands, normalizeBase } from '@kuboon/remix-ssg/site'
+import {
+  compose,
+  createFileTree,
+  createIslands,
+  githubPages,
+  normalizeBase,
+  serveAsHost,
+} from '@kuboon/remix-ssg/site'
 import { markdown } from './transforms/markdown.tsx'
 
 export const base = normalizeBase(Deno.env.get('BASE_URL'))
 export const entryPoints = ['/']
+export const fileServer = githubPages()
 
 let islands = await createIslands({ rootDir: 'islands', basePath: `${base}/assets` })
 
-export default compose(
-  await createFileTree({
-    rootDir: 'pages',
-    basePath: base,
-    transforms: [markdown({ base, islandUrls: islands.urls })],
-  }),
-  await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
-  islands,
+export default serveAsHost(
+  compose(
+    await createFileTree({
+      rootDir: 'pages',
+      basePath: base,
+      transforms: [markdown({ base, islandUrls: islands.urls })],
+    }),
+    await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
+    islands,
+  ),
+  { behavior: fileServer, base },
 )
 ```
 
@@ -188,7 +199,8 @@ the chunk the bundler emitted, which comes from the bundler rather than a conven
 names shift with the set of entrypoints. In a config file that ordering had to be expressed as "the
 config is a function so it can be handed the URLs". Here it is just the order of two statements.
 
-`base` and `entryPoints` are what the build reads; the default export is what `deno serve` serves.
+`base`, `entryPoints` and `fileServer` are what the build reads; the default export is what
+`deno serve` serves.
 The build crawls that same object, so moving from a static deploy to a live server is a change of
 deploy target rather than of code.
 
@@ -253,6 +265,38 @@ evaluated in the browser too; the layout embeds the name-to-chunk map under
 The crawl starts at `entryPoints` and follows links — including `import` inside JavaScript, which
 is how a code-split bundle's shared chunks are reached. **What is reachable is what gets
 generated**: a page nothing links to belongs in `entryPoints`, or it is not part of the site.
+
+### The host
+
+A static host is the last piece of routing in the stack, and the one this package does not control.
+GitHub Pages serves `/about` from `about.html`, falls back to `about/index.html` with a redirect,
+and 404s `/about/` when only the former exists; Vercel, Netlify and S3 each answer differently. Two
+things depend on it — where the build writes each page, and whether the dev server behaves like the
+deploy — so it is one swappable object:
+
+```ts
+interface FileServerBehavior {
+  toLocalPaths(urlPath: string): (string | { target: string; path?: string })[]
+}
+```
+
+The array is the files the host would try, in order: a string is served if it exists, a
+`{ target, path }` is a redirect issued if `path` exists, and nothing matching is a 404. The shape
+follows [`@kuboon/file-server-behavior`](https://jsr.io/@kuboon/file-server-behavior), which derives
+these rules from [trailing-slash-guide](https://github.com/slorber/trailing-slash-guide) — small
+enough to state here rather than depend on, and a structural match, so that package's
+implementations can be passed straight in.
+
+`githubPages()` is the default, and it is why the build writes `about.html` rather than
+`about/index.html`: a site whose links say `/about` then costs no redirect.
+
+**This is not a setting on each middleware.** Which file a URL resolves to is a property of where
+the site is deployed, and every part of the site has to agree on it — so `serveAsHost` wraps the
+composed site once, and the same object goes to the build. `compose` returns a `SiteMiddleware`
+itself, which is what lets it nest.
+
+Without the wrapper the dev server is quietly more forgiving than the deploy: `/about/` answers
+locally and 404s in production. With it, both 404.
 
 ### Base paths
 

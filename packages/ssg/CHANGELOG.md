@@ -30,6 +30,12 @@ This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-u
 
   There is no dev-server command, because `router.ts` is an ordinary module that default-exports a `fetch` — `deno serve` already is one. Pass `-c deno.json` to the build: a remote main module picks up a project's config only when it is named, and both the permission set and `"unstable": ["bundle"]` come from there, so neither `-A` nor `--unstable-bundle` belongs on the command line.
 
+- The static host's URL-to-file rule is a swappable object, `FileServerBehavior`, and the default is `githubPages()`. It decides two things that have to agree: where the build writes each page, and how the dev server resolves a request. `serveAsHost` wraps the composed site with it — not a setting on each middleware, because which file a URL resolves to is a property of the deploy target and every part of the site has to agree on it. The shape follows [`@kuboon/file-server-behavior`](https://jsr.io/@kuboon/file-server-behavior) closely enough to accept its implementations, without depending on it.
+
+  Two consequences worth knowing. Pages are now written as `about.html` rather than `about/index.html`, because that is the file GitHub Pages reaches for first — so a site whose links say `/about` no longer pays a redirect. And `/about/` now 404s in the dev server, as it does on the deploy, instead of quietly working.
+
+  `crawl` gained an `outputPath` option for the same reason; its default is unchanged.
+
 - There is no config file and no site object. Islands have to be compiled before the layout can be handed `islandUrls` — the map from an island's name to the chunk the bundler emitted, which shifts with the set of entrypoints — and in a config that ordering had to be expressed as "the config is a function so it can receive them". In a router it is the order of two statements.
 
 - What the framework deliberately does not have: a content model, a document shell, a route table. A `FileTransform` claims the files it renders and says where they are served, and it comes from the site — which is what keeps Markdown, or any other format, and its dependencies out of this package. The layout is the site's too.

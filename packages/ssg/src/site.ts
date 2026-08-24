@@ -15,14 +15,17 @@
  *
  * let islands = await createIslands({ rootDir: 'islands', basePath: `${base}/assets` })
  *
- * export default compose(
- *   await createFileTree({
- *     rootDir: 'pages',
- *     basePath: base,
- *     transforms: [markdown({ base, islandUrls: islands.urls })],
- *   }),
- *   await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
- *   islands,
+ * export default serveAsHost(
+ *   compose(
+ *     await createFileTree({
+ *       rootDir: 'pages',
+ *       basePath: base,
+ *       transforms: [markdown({ base, islandUrls: islands.urls })],
+ *     }),
+ *     await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
+ *     islands,
+ *   ),
+ *   { base },
  * )
  * ```
  *
@@ -42,6 +45,8 @@ export type { FileTransform, FileTreeOptions } from './lib/site/file-tree.ts'
 export { createIslands } from './lib/site/islands.ts'
 export type { Islands, IslandsOptions } from './lib/site/islands.ts'
 export { joinBase, normalizeBase, stripBase } from './lib/site/base.ts'
+export { githubPages, outputPathFor, serveAsHost } from './lib/site/host.ts'
+export type { FileServerBehavior, HostOptions, Redirect } from './lib/site/host.ts'
 export { buildSite } from './lib/site/build.ts'
 export type { BuildOptions, BuildStats } from './lib/site/build.ts'
 export { loadRouter } from './lib/site/load.ts'
