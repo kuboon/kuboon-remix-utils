@@ -13,7 +13,8 @@ function siteServing(...urls: string[]): SiteMiddleware {
     basePath: '',
     // deno-lint-ignore require-await
     fetch: async (request) => {
-      let pathname = new URL(request.url).pathname
+      // Decoded, like the real file tree — its entries are keyed by the path a person would type.
+      let pathname = decodeURIComponent(new URL(request.url).pathname)
       return served.has(pathname)
         ? new Response(pathname, { headers: { 'content-type': 'text/html; charset=utf-8' } })
         : new Response('Not Found', { status: 404 })
@@ -86,6 +87,19 @@ describe('serveAsHost', () => {
     let response = await site.fetch(new Request('http://localhost/about'))
     assert.equal(response.status, 301)
     assert.equal(new URL(response.headers.get('location')!).pathname, '/about/')
+  })
+
+  it('re-requests a path that needs escaping without losing half of it', async () => {
+    // A decoded path handed to `new URL()` turns everything after a `#` into a fragment, so the
+    // page silently 404s. It has to be escaped on the way back into a URL.
+    let site = serveAsHost(siteServing('/blog/release notes #2'))
+
+    let response = await site.fetch(
+      new Request('http://localhost/blog/release%20notes%20%232'),
+    )
+
+    assert.equal(response.status, 200)
+    assert.equal(await response.text(), '/blog/release notes #2')
   })
 
   it('resolves within the artifact, so a deploy prefix is not part of the file name', async () => {
