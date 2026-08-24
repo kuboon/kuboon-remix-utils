@@ -144,11 +144,9 @@ export function serveAsHost(site: SiteMiddleware, options: HostOptions = {}): Si
       for (let candidate of behavior.toLocalPaths(requested)) {
         if (typeof candidate === 'string') {
           let served = byFile.get(candidate)
-          if (served !== undefined) {
-            return await site.fetch(new Request(new URL(served + url.search, url), request))
-          }
+          if (served !== undefined) return await site.fetch(new Request(at(url, served), request))
         } else if (candidate.path === undefined || byFile.has(candidate.path)) {
-          return Response.redirect(new URL(joinBase(base, candidate.target), url), 301)
+          return Response.redirect(at(url, joinBase(base, candidate.target)), 301)
         }
       }
 
@@ -162,6 +160,20 @@ export function serveAsHost(site: SiteMiddleware, options: HostOptions = {}): Si
       index()
     },
   }
+}
+
+/**
+ * The same URL, pointing at a different path.
+ *
+ * Every path here is in decoded form — that is how the tree keys its entries — so it has to be
+ * escaped on the way back into a URL. Handing a decoded path to `new URL()` looks like it works
+ * until a file name contains a `#`, at which point the rest of the path silently becomes a
+ * fragment.
+ */
+function at(url: URL, servedPath: string): URL {
+  let target = new URL(url)
+  target.pathname = servedPath.split('/').map(encodeURIComponent).join('/')
+  return target
 }
 
 function notFound(): Response {

@@ -2,6 +2,10 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.5.1
+
+- `serveAsHost` lost half of any path that needed escaping. Having matched a request to what the site serves, it rebuilt the URL from the tree's key — which is in decoded form — with `new URL(served, url)`. For `/blog/release notes #2` that makes everything after the `#` a fragment, so the request arrived at the tree as `/blog/release notes` and 404'd. Paths are now escaped per segment on the way back into a URL. Redirect targets went through the same path and are fixed with it.
+
 ## 0.5.0
 
 - `FileTransform.render` takes one argument instead of two. It used to be handed `(absolutePath, relativePath)` — the same fact spelled twice, since the tree knows its own root. It now gets a `SourceFile`:
