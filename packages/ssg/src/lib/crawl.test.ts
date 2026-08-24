@@ -28,6 +28,41 @@ async function collect(iter: AsyncIterable<CrawlResult>): Promise<CrawlResult[]>
 }
 
 describe('crawl', () => {
+  it('follows imports out of a JavaScript response', async () => {
+    let router = makeRouter({
+      '/': { body: '<script type="module" src="/assets/entry.js"></script>' },
+      '/assets/entry.js': {
+        body: 'import{a}from"./chunk-A.js";import("./lazy.js");a()',
+        type: 'text/javascript; charset=utf-8',
+      },
+      '/assets/chunk-A.js': {
+        body: 'export const a=()=>1',
+        type: 'text/javascript; charset=utf-8',
+      },
+      '/assets/lazy.js': { body: 'export default 1', type: 'text/javascript; charset=utf-8' },
+    })
+
+    let paths = (await collect(crawl(router, { paths: ['/'] }))).map((result) => result.pathname)
+
+    // A code-split bundle reaches its shared chunks only through `import`; no markup names them.
+    assert.ok(paths.includes('/assets/chunk-A.js'), `static import followed, got ${paths}`)
+    assert.ok(paths.includes('/assets/lazy.js'), `literal dynamic import followed, got ${paths}`)
+  })
+
+  it('ignores a bare specifier and an unparseable script', async () => {
+    let router = makeRouter({
+      '/': { body: '<script type="module" src="/assets/entry.js"></script>' },
+      '/assets/entry.js': {
+        body: 'import "remix/ui"; import(name); this is not javascript',
+        type: 'text/javascript; charset=utf-8',
+      },
+    })
+
+    let paths = (await collect(crawl(router, { paths: ['/'] }))).map((result) => result.pathname)
+
+    assert.equal(paths.length, 2, `only the page and the entry, got ${paths}`)
+  })
+
   it('spiders links from rendered HTML and dedupes visited paths', async () => {
     let router = makeRouter({
       '/': {

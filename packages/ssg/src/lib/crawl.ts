@@ -1,3 +1,5 @@
+import { init, parse as parseModule } from 'es-module-lexer'
+
 import { parse } from './html-parser.ts'
 import type { HTMLElement } from './html-parser.ts'
 
@@ -92,6 +94,17 @@ export interface CrawlOptions {
    * keep crawling past broken links. See {@link CrawlErrorHandler}.
    */
   onError?: CrawlErrorHandler
+  /**
+   * Where a response is written, as a path relative to the site root.
+   *
+   * Defaults to `<pathname>/index.html` for HTML and the pathname itself for everything else. A
+   * static host decides this — `about.html` and `about/index.html` are not interchangeable — so a
+   * build for a particular host passes its rule here. See `@kuboon/remix-ssg/site`'s `githubPages`.
+   *
+   * @param pathname The request path that produced the response
+   * @param response The response, for deciding by content type
+   */
+  outputPath?: (pathname: string, response: Response) => string
 }
 
 /**
@@ -112,6 +125,7 @@ export async function* crawl(
     concurrency = 1,
     ignorePageNofollow,
     onError = 'throw',
+    outputPath = defaultOutputPath,
   } = options
 
   interface QueueItem {
@@ -180,11 +194,7 @@ export async function* crawl(
 
       if (isHtml) {
         let cloned = response.clone()
-        results.push({
-          pathname,
-          filepath: pathname.replace(/\/?$/, '/index.html'),
-          response,
-        })
+        results.push({ pathname, filepath: outputPath(pathname, response), response })
 
         let dom = parse(await cloned.text())
 
@@ -193,8 +203,12 @@ export async function* crawl(
         if (spider && (ignorePageNofollow?.(pathname) || shouldCrawlLinks(dom.elements))) {
           enqueue(extractLinkPaths(dom.elements, pathname), pathname)
         }
+      } else if (isScript(response)) {
+        let cloned = response.clone()
+        results.push({ pathname, filepath: outputPath(pathname, response), response })
+        enqueue(await extractImportPaths(await cloned.text(), pathname), pathname)
       } else {
-        results.push({ pathname, filepath: pathname, response })
+        results.push({ pathname, filepath: outputPath(pathname, response), response })
       }
     } catch (e) {
       error = e
@@ -203,6 +217,50 @@ export async function* crawl(
       bump()
     }
   }
+}
+
+/** The rule when a caller names none: a directory index for pages, the path itself for the rest. */
+function defaultOutputPath(pathname: string, response: Response): string {
+  return response.headers.get('Content-Type')?.includes('text/html')
+    ? pathname.replace(/\/?$/, '/index.html')
+    : pathname
+}
+
+/** Whether a response is JavaScript, and so worth reading for imports. */
+function isScript(response: Response): boolean {
+  let contentType = response.headers.get('Content-Type') ?? ''
+  return contentType.includes('javascript') || contentType.includes('ecmascript')
+}
+
+/**
+ * The paths a JavaScript module imports.
+ *
+ * A code-split bundle reaches its shared chunks only through `import` — no HTML mentions them — so
+ * a crawler that reads markup alone stops at the entry chunk and leaves the rest unwritten.
+ * Following imports keeps one rule for the whole site: what is reachable is what gets generated.
+ *
+ * Only static specifiers and dynamic `import()` with a literal argument are followed; there is
+ * nothing to resolve in `import(someVariable)`.
+ */
+async function extractImportPaths(code: string, baseUrl: string): Promise<string[]> {
+  await init
+
+  let imports
+  try {
+    ;[imports] = parseModule(code)
+  } catch {
+    // Not parseable as a module — nothing to follow, and not this function's job to complain.
+    return []
+  }
+
+  return imports
+    .map((entry) => entry.n)
+    .filter((specifier): specifier is string => specifier !== undefined)
+    // Explicitly relative or root-absolute only. A bare specifier is a package name, and
+    // resolving one against the page would invent a path the site never had.
+    .filter((specifier) => /^\.{0,2}\//.test(specifier))
+    .map((specifier) => resolveHref(specifier, baseUrl))
+    .filter((href): href is string => href !== null)
 }
 
 function extractAssetPaths(elements: HTMLElement[], baseUrl: string): string[] {
