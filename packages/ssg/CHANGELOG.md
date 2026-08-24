@@ -2,6 +2,10 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.5.2
+
+- `buildSite` named output files after a URL's escapes. A crawl carries paths in the form a request uses, so a page linked as `/notes%20%231` was written to a file literally called `notes%20%231.html` — which a static host, decoding the request before it looks, would never find. Output paths are decoded now. This is the last of the three places the same confusion lived; the fixture site has a page whose name needs escaping, reached through an ordinary link, so a build proves it end to end.
+
 ## 0.5.1
 
 - `serveAsHost` lost half of any path that needed escaping. Having matched a request to what the site serves, it rebuilt the URL from the tree's key — which is in decoded form — with `new URL(served, url)`. For `/blog/release notes #2` that makes everything after the `#` a fragment, so the request arrived at the tree as `/blog/release notes` and 404'd. Paths are now escaped per segment on the way back into a URL. Redirect targets went through the same path and are fixed with it.

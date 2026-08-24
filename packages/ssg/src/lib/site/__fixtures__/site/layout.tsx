@@ -35,6 +35,8 @@ export function renderPage(props: LayoutProps): Promise<string> {
           <a href={home}>Home</a>
           <a href={`${props.base}/about`}>About</a>
           <a href={`${props.base}/blog/hello`}>Hello</a>
+          {/* Escaped in the URL; the file on disk must not be named after the escapes. */}
+          <a href={`${props.base}/release%20notes%20%232`}>Notes</a>
         </nav>
         <main>{props.children}</main>
         {chunks.length > 0
