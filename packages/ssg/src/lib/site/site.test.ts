@@ -2,15 +2,35 @@ import * as assert from '@remix-run/assert'
 import * as path from 'node:path'
 import { describe, it } from '@std/testing/bdd'
 
-import { assembleSite } from './assemble.ts'
 import { buildSite } from './build.ts'
-import { loadSiteConfig } from './load.ts'
+import { loadRouter } from './load.ts'
+import type { SiteRouter } from './load.ts'
 
 let siteDir = new URL('./__fixtures__/site/', import.meta.url).pathname
+let routerUrl = new URL('./__fixtures__/site/router.ts', import.meta.url).href
+
+/**
+ * Imports the fixture router under a given deploy prefix.
+ *
+ * The prefix is baked into the middlewares when the router module evaluates, so a second prefix
+ * needs a second evaluation — hence the query. That is the real constraint, not a test artifact: a
+ * site is built for one deploy target per process.
+ */
+async function load(base?: string): Promise<SiteRouter> {
+  if (base === undefined) Deno.env.delete('BASE_URL')
+  else Deno.env.set('BASE_URL', base)
+
+  try {
+    return await import(`${routerUrl}?base=${encodeURIComponent(base ?? '')}`) as SiteRouter
+  } finally {
+    Deno.env.delete('BASE_URL')
+  }
+}
 
 async function build(base?: string) {
+  let router = await load(base)
   let outDir = await Deno.makeTempDir({ prefix: 'remix-ssg-site-' })
-  let stats = await buildSite({ rootDir: siteDir, outDir, base })
+  let stats = await buildSite(router, { outDir })
   let files = new Set<string>()
 
   for await (let entry of walk(outDir, outDir)) files.add(entry)
@@ -33,13 +53,27 @@ async function* walk(directory: string, root: string): AsyncIterableIterator<str
 }
 
 describe('buildSite', () => {
-  it('writes the pages reachable from the entry point', async () => {
+  it('writes the pages reachable from the entry points', async () => {
     let { files, cleanup } = await build()
 
     try {
       assert.ok(files.has('index.html'), 'the entry point itself')
       assert.ok(files.has('about/index.html'), 'a page linked from it')
       assert.ok(files.has('blog/hello/index.html'), 'a nested page linked from it')
+      assert.ok(files.has('orphan/index.html'), 'a page linked from nowhere but named an entry')
+    } finally {
+      await cleanup()
+    }
+  })
+
+  it('leaves out a page nothing links to and nothing names', async () => {
+    let { files, cleanup } = await build()
+
+    try {
+      assert.ok(
+        !files.has('hidden/index.html'),
+        `hidden.md is not part of the site, got ${[...files]}`,
+      )
     } finally {
       await cleanup()
     }
@@ -120,6 +154,7 @@ describe('buildSite', () => {
 
     try {
       assert.ok(files.has('index.html'), 'output still lands at the root')
+      assert.ok(files.has('orphan/index.html'), 'a prefixed entry point too')
       assert.ok([...files].some((file) => file.startsWith('assets/')), 'chunks too')
 
       let html = await read('index.html')
@@ -142,43 +177,48 @@ describe('buildSite', () => {
   })
 })
 
-describe('assembleSite', () => {
+describe('the router itself', () => {
   it('serves pages, static files and chunks from one handler', async () => {
-    let { definition, rootDir } = await loadSiteConfig(siteDir)
-    let site = await assembleSite(definition, { rootDir, base: '', minify: false })
+    let router = await load()
 
-    let page = await site.fetch(new Request('http://localhost/about'))
+    let page = await router.default.fetch(new Request('http://localhost/about'))
     assert.equal(page.status, 200)
     assert.ok(page.headers.get('content-type')?.startsWith('text/html'))
 
-    let css = await site.fetch(new Request('http://localhost/static/styles.css'))
+    let css = await router.default.fetch(new Request('http://localhost/static/styles.css'))
     assert.equal(css.status, 200)
 
-    let chunk = await site.fetch(new Request('http://localhost/assets/counter.js'))
+    let chunk = await router.default.fetch(new Request('http://localhost/assets/counter.js'))
     assert.equal(chunk.status, 200)
 
-    assert.equal((await site.fetch(new Request('http://localhost/nope'))).status, 404)
+    assert.equal((await router.default.fetch(new Request('http://localhost/nope'))).status, 404)
   })
 
-  it('starts the crawl at the entry points, base path applied', async () => {
-    let { definition, rootDir } = await loadSiteConfig(siteDir)
-    let site = await assembleSite(definition, { rootDir, base: '/repo', minify: false })
+  it('answers for a page the build leaves out — it is unreachable, not unserved', async () => {
+    let router = await load()
 
-    assert.equal(site.entryPoints.join(','), '/repo', 'the root loses its trailing slash')
+    assert.equal((await router.default.fetch(new Request('http://localhost/hidden'))).status, 200)
   })
 })
 
-describe('loadSiteConfig', () => {
-  it('explains itself when there is no config', async () => {
+describe('loadRouter', () => {
+  it('explains itself when there is no router', async () => {
     let empty = await Deno.makeTempDir({ prefix: 'remix-ssg-empty-' })
 
     try {
       await assert.rejects(
-        () => loadSiteConfig(empty),
-        (error: Error) => error.message.includes('No site config'),
+        () => loadRouter(empty),
+        (error: Error) => error.message.includes('No router'),
       )
     } finally {
       await Deno.remove(empty, { recursive: true })
     }
+  })
+
+  it('finds the router a site wrote', async () => {
+    let { router, rootDir } = await loadRouter(siteDir)
+
+    assert.equal(typeof router.default.fetch, 'function')
+    assert.equal(rootDir, siteDir.replace(/\/$/, ''))
   })
 })

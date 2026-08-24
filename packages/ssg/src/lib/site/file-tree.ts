@@ -12,6 +12,7 @@
 
 import * as path from 'node:path'
 
+import { joinBase, normalizeBase } from './base.ts'
 import type { SiteMiddleware } from './middleware.ts'
 
 /** Renders the files it claims. */
@@ -80,7 +81,7 @@ interface Entry {
  */
 export async function createFileTree(options: FileTreeOptions): Promise<SiteMiddleware> {
   let rootDir = path.resolve(options.rootDir)
-  let basePath = normalizeBasePath(options.basePath ?? '')
+  let basePath = normalizeBase(options.basePath)
   let cacheControl = options.cacheControl ?? 'no-cache'
   let transforms = options.transforms ?? []
 
@@ -187,23 +188,6 @@ async function walk(directory: string, root: string): Promise<string[]> {
   }
 
   return found.sort()
-}
-
-function normalizeBasePath(basePath: string): string {
-  let trimmed = basePath.trim().replace(/\/+$/, '')
-  if (trimmed === '') return ''
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
-}
-
-/**
- * Joins the mount point and a path.
- *
- * The root is the case that bites: mounted at `/repo`, the tree's `/` is `/repo`, not `/repo/` —
- * the latter matches nothing.
- */
-function joinBase(basePath: string, servedPath: string): string {
-  if (servedPath === '/' || servedPath === '') return basePath === '' ? '/' : basePath
-  return `${basePath}${servedPath.startsWith('/') ? '' : '/'}${servedPath}`
 }
 
 const CONTENT_TYPES: Record<string, string> = {

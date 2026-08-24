@@ -1,27 +1,48 @@
 /**
- * The site framework: the assembly a static site needs beyond its own content.
+ * The parts a static site is assembled from.
  *
- * Three directories and one config file. `islands/` is compiled as a single code-split graph,
- * `pages/` is served through the site's own transforms, `static/` is served verbatim — and the
- * result is one handler that the build crawls and the dev server serves.
+ * A site writes its own `router.ts` and wires these together: islands compiled as one code-split
+ * graph, a directory of pages served through the site's own transforms, a directory served
+ * verbatim. What comes out is one handler — `deno serve router.ts` serves it, and the build crawls
+ * it.
+ *
+ * ```ts
+ * // router.ts
+ * import { compose, createFileTree, createIslands, normalizeBase } from '@kuboon/remix-ssg/site'
+ * import { markdown } from './transforms/markdown.tsx'
+ *
+ * export const base = normalizeBase(Deno.env.get('BASE_URL'))
+ *
+ * let islands = await createIslands({ rootDir: 'islands', basePath: `${base}/assets` })
+ *
+ * export default compose(
+ *   await createFileTree({
+ *     rootDir: 'pages',
+ *     basePath: base,
+ *     transforms: [markdown({ base, islandUrls: islands.urls })],
+ *   }),
+ *   await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
+ *   islands,
+ * )
+ * ```
+ *
+ * ```sh
+ * deno serve -P=dev --watch router.ts
+ * deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
+ * ```
  *
  * What is deliberately absent: any notion of what a page is made of. No content model, no document
  * shell, no route table. A transform decides those, and it lives in the site.
- *
- * ```sh
- * deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
- * deno run -c deno.json -P=dev   jsr:@kuboon/remix-ssg/dev.ts
- * ```
  */
 
-export { defineSite } from './lib/site/config.ts'
-export type { SiteConfig, SiteContext, SiteDefinition } from './lib/site/config.ts'
-export { createFileTree } from './lib/site/file-tree.ts'
-export type { FileTransform, FileTreeOptions } from './lib/site/file-tree.ts'
 export { compose } from './lib/site/middleware.ts'
 export type { SiteMiddleware } from './lib/site/middleware.ts'
-export { assembleSite } from './lib/site/assemble.ts'
-export type { AssembledSite, AssembleOptions } from './lib/site/assemble.ts'
+export { createFileTree } from './lib/site/file-tree.ts'
+export type { FileTransform, FileTreeOptions } from './lib/site/file-tree.ts'
+export { createIslands } from './lib/site/islands.ts'
+export type { Islands, IslandsOptions } from './lib/site/islands.ts'
+export { joinBase, normalizeBase, stripBase } from './lib/site/base.ts'
 export { buildSite } from './lib/site/build.ts'
 export type { BuildOptions, BuildStats } from './lib/site/build.ts'
-export { loadSiteConfig } from './lib/site/load.ts'
+export { loadRouter } from './lib/site/load.ts'
+export type { SiteRouter } from './lib/site/load.ts'

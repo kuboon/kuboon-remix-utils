@@ -131,7 +131,7 @@ a project holds its content and nothing else.
 ```
 my-site/
   deno.json            # imports, tasks, permission sets
-  site.config.ts       # transforms and entry points
+  router.ts            # yours — the wiring, in one readable file
   layout.tsx           # yours — the framework has no document shell
   transforms/
     markdown.tsx       # yours — the framework never sees Markdown
@@ -145,23 +145,54 @@ my-site/
 ```
 
 ```sh
+deno serve -P=dev --watch router.ts
 deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
-deno run -c deno.json -P=dev   jsr:@kuboon/remix-ssg/dev.ts
 ```
 
+There is no dev-server command in this package, because there is nothing left for one to do:
+`router.ts` is an ordinary module that default-exports a `fetch`, so `deno serve` already is the
+dev server.
+
 > [!IMPORTANT]
-> `-c deno.json` is not optional. A remote main module picks up a project's config only when it is
-> named, and both the permission set and `"unstable": ["bundle"]` come from there. That is also what
-> lets these run without `-A`.
+> `-c deno.json` is not optional for the build. A remote main module picks up a project's config
+> only when it is named, and both the permission set and `"unstable": ["bundle"]` come from there.
+> That is also what lets it run without `-A`. `deno serve` runs a local module, so it finds the
+> config on its own.
 
-### Three directories, one handler
+### The router
 
-`islands/` is compiled as a single code-split graph. `pages/` is served through the site's
-transforms. `static/` is served verbatim. They compose into one `fetch` — the build crawls it, the
-dev server serves it — so moving from a static deploy to a live server is a change of deploy target
-rather than of code.
+Nothing here is a convention — the site says what it wants served, in order:
 
-Everything in the pipeline satisfies the same contract, so a site can add to it:
+```ts
+import { compose, createFileTree, createIslands, normalizeBase } from '@kuboon/remix-ssg/site'
+import { markdown } from './transforms/markdown.tsx'
+
+export const base = normalizeBase(Deno.env.get('BASE_URL'))
+export const entryPoints = ['/']
+
+let islands = await createIslands({ rootDir: 'islands', basePath: `${base}/assets` })
+
+export default compose(
+  await createFileTree({
+    rootDir: 'pages',
+    basePath: base,
+    transforms: [markdown({ base, islandUrls: islands.urls })],
+  }),
+  await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
+  islands,
+)
+```
+
+Islands are compiled first because the layout needs `islandUrls` — the map from an island's name to
+the chunk the bundler emitted, which comes from the bundler rather than a convention because output
+names shift with the set of entrypoints. In a config file that ordering had to be expressed as "the
+config is a function so it can be handed the URLs". Here it is just the order of two statements.
+
+`base` and `entryPoints` are what the build reads; the default export is what `deno serve` serves.
+The build crawls that same object, so moving from a static deploy to a live server is a change of
+deploy target rather than of code.
+
+Everything composed satisfies the same contract, so a site can add its own:
 
 ```ts
 interface SiteMiddleware {
@@ -197,22 +228,6 @@ A transform decides a route from the file's path alone. The tree needs every rou
 anything, and a route that depended on a file's contents would make what a site serves impossible
 to see by looking at it.
 
-### The config
-
-```ts
-import { defineSite } from '@kuboon/remix-ssg/site'
-import { markdown } from './transforms/markdown.tsx'
-
-export default defineSite(({ base, islandUrls }) => ({
-  transforms: [markdown({ base, islandUrls })],
-  entryPoints: ['/'],
-}))
-```
-
-Islands are compiled before the config is built, so a layout can be handed `islandUrls` — the map
-from an island's name to the chunk the bundler emitted. It comes from the bundler rather than a
-convention because output names shift with the set of entrypoints.
-
 ### Islands
 
 ```tsx
@@ -241,10 +256,12 @@ generated**: a page nothing links to belongs in `entryPoints`, or it is not part
 
 ### Base paths
 
-`BASE_URL` (or `--base`) mounts the whole site under a path prefix, as a GitHub Pages project site
-or a per-PR preview needs. Both a full URL and a bare prefix are accepted. Links and asset URLs
-carry the prefix; the build strips it back off when writing, so output always lands at the root of
+`normalizeBase` turns what a GitHub Pages workflow hands out — a full URL — into the path prefix a
+project site or a per-PR preview needs; a bare `/repo` is accepted too. Links and asset URLs carry
+the prefix; the build strips it back off when writing, so output always lands at the root of
 `dist/`.
+
+The prefix is baked in when `router.ts` evaluates, so a process builds for one deploy target.
 
 ## Related Packages
 

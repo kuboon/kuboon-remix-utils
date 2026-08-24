@@ -4,20 +4,39 @@ This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-u
 
 ## 0.4.0
 
-- Added `@kuboon/remix-ssg/site` and two CLI entries, `build.ts` and `dev.ts`. Three directories compose into one handler: `islands/` compiled as a single code-split graph, `pages/` served through the site's own transforms, `static/` served verbatim. The build crawls that handler and the dev server serves it, so moving from a static deploy to a live server is a change of deploy target rather than of code.
+- Added `@kuboon/remix-ssg/site`: the parts a static site is assembled from, and one CLI entry, `build.ts`. A site wires the parts together itself, in a `router.ts` it owns:
 
-  ```sh
-  deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
-  deno run -c deno.json -P=dev   jsr:@kuboon/remix-ssg/dev.ts
+  ```ts
+  export const base = normalizeBase(Deno.env.get('BASE_URL'))
+  export const entryPoints = ['/']
+
+  let islands = await createIslands({ rootDir: 'islands', basePath: `${base}/assets` })
+
+  export default compose(
+    await createFileTree({
+      rootDir: 'pages',
+      basePath: base,
+      transforms: [markdown({ base, islandUrls: islands.urls })],
+    }),
+    await createFileTree({ rootDir: 'static', basePath: `${base}/static` }),
+    islands,
+  )
   ```
 
-  Pass `-c deno.json`: a remote main module picks up a project's config only when it is named, and both the permission set and `"unstable": ["bundle"]` come from there — so neither `-A` nor `--unstable-bundle` belongs on the command line.
+  ```sh
+  deno serve -P=dev --watch router.ts
+  deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
+  ```
+
+  There is no dev-server command, because `router.ts` is an ordinary module that default-exports a `fetch` — `deno serve` already is one. Pass `-c deno.json` to the build: a remote main module picks up a project's config only when it is named, and both the permission set and `"unstable": ["bundle"]` come from there, so neither `-A` nor `--unstable-bundle` belongs on the command line.
+
+- There is no config file and no site object. Islands have to be compiled before the layout can be handed `islandUrls` — the map from an island's name to the chunk the bundler emitted, which shifts with the set of entrypoints — and in a config that ordering had to be expressed as "the config is a function so it can receive them". In a router it is the order of two statements.
 
 - What the framework deliberately does not have: a content model, a document shell, a route table. A `FileTransform` claims the files it renders and says where they are served, and it comes from the site — which is what keeps Markdown, or any other format, and its dependencies out of this package. The layout is the site's too.
 
-- `SiteMiddleware` names the contract everything in the pipeline satisfies — mount point, fetch, what it serves, rebuild — which `@kuboon/remix-assets-deno`'s asset server already had. `compose` treats a `404` as "not mine" and passes it along, so pages and islands share a site without knowing about each other.
+- `SiteMiddleware` names the contract everything composed satisfies — mount point, fetch, what it serves, rebuild — which `@kuboon/remix-assets-deno`'s asset server already had. `compose` treats a `404` as "not mine" and passes it along, so pages and islands share a site without knowing about each other.
 
-- `crawl` now follows `import` out of JavaScript responses. A code-split bundle reaches its shared chunks only that way, and seeding them separately was a special case standing in for what crawling is for. One rule covers the site: what is reachable from the entry points is what gets generated.
+- `crawl` now follows `import` out of JavaScript responses. A code-split bundle reaches its shared chunks only that way, and seeding them separately was a special case standing in for what crawling is for. One rule covers the site: what is reachable from `entryPoints` is what gets generated. A page nothing links to is still _served_ — it is unreachable, not unserved — so naming it in `entryPoints` is all it takes to build it.
 
 - Added `@kuboon/remix-ssg/client` with `island()`. Islands are compiled as one graph, so a module two of them import is emitted once — and the client runtime starts from the chunk they share rather than from a runtime entrypoint a site would have to declare. An island's id is a logical name rather than a URL, because ids are evaluated in the browser too, where predicting the bundler's output naming is guesswork.
 

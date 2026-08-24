@@ -7,8 +7,7 @@
     "./node": "./src/node.ts",
     "./site": "./src/site.ts",
     "./client": "./src/client.ts",
-    "./build.ts": "./src/build.ts",
-    "./dev.ts": "./src/dev.ts"
+    "./build.ts": "./src/build.ts"
   },
   "imports": {
     "@kuboon/remix-assets-deno": "jsr:@kuboon/remix-assets-deno@^0.4.2",
