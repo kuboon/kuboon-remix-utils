@@ -27,22 +27,20 @@ export function page(
       return `/${withoutExtension}`.replace(/\/$/, '') || '/'
     },
 
-    async render(absolutePath, relativePath) {
+    async render(file) {
       // Cached for the life of the process; `deno serve --watch` restarts when a page changes.
-      let url = new URL('file://')
-      url.pathname = absolutePath.split('/').map(encodeURIComponent).join('/')
-      let module = await import(url.href) as PageModule
+      let module = await import(file.url.href) as PageModule
 
       let urls: Record<string, string> = {}
       for (let name of module.islands ?? []) {
         let chunk = context.islandUrls[name]
-        if (chunk === undefined) throw new Error(`"${relativePath}" names no island "${name}".`)
+        if (chunk === undefined) throw new Error(`"${file.path}" names no island "${name}".`)
         urls[name] = chunk
       }
 
       return {
         body: await renderPage({
-          title: module.title ?? relativePath,
+          title: module.title ?? file.path,
           base: context.base,
           islandUrls: urls,
           children: module.default(),

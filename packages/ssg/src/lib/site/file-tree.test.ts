@@ -11,8 +11,8 @@ let markdown: FileTransform = {
   match: (relativePath) => relativePath.endsWith('.md'),
   path: (relativePath) =>
     `/${relativePath.replace(/\.md$/, '').replace(/(^|\/)index$/, '')}`.replace(/\/$/, '') || '/',
-  render: async (absolutePath) => ({
-    body: `<html><body>${await Deno.readTextFile(absolutePath)}</body></html>`,
+  render: async (file) => ({
+    body: `<html><body>${await Deno.readTextFile(file.url)}</body></html>`,
     contentType: 'text/html; charset=utf-8',
   }),
 }
@@ -76,6 +76,24 @@ describe('createFileTree', () => {
       assert.equal((await tree.fetch(new Request('http://localhost/about'))).status, 404)
     } finally {
       await cleanup()
+    }
+  })
+
+  it('hands a transform a URL that survives an awkward file name', async () => {
+    // `file://${absolutePath}` would break here, which is why a transform is given a URL and not
+    // asked to build one.
+    let pages = await makeTree({ 'release notes #2.md': 'notes' })
+
+    try {
+      let tree = await createFileTree({ rootDir: pages.rootDir, transforms: [markdown] })
+      let response = await tree.fetch(
+        new Request(`http://localhost${encodeURI('/release notes #2').replace('#', '%23')}`),
+      )
+
+      assert.equal(response.status, 200)
+      assert.ok((await response.text()).includes('notes'))
+    } finally {
+      await pages.cleanup()
     }
   })
 
