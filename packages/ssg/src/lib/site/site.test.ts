@@ -68,6 +68,18 @@ describe('buildSite', () => {
     }
   })
 
+  it('names an output file after the path, not after its escapes', async () => {
+    let { files, cleanup } = await build()
+
+    try {
+      // The layout links to `/release%20notes%20%232`. A host decodes before it looks, so the file
+      // has to carry the decoded name — `release%20notes%20%232.html` would never be found.
+      assert.ok(files.has('release notes #2.html'), `decoded file name, got ${[...files]}`)
+    } finally {
+      await cleanup()
+    }
+  })
+
   it('leaves out a page nothing links to and nothing names', async () => {
     let { files, cleanup } = await build()
 

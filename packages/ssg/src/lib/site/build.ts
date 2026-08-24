@@ -55,8 +55,13 @@ export async function buildSite(
 
   // The host decides which file answers a URL, so the build writes the file it would reach for
   // first — and the prefix comes off here, because inside the artifact there is no prefix.
+  //
+  // Decoded, because a file name is not a URL. A crawl carries paths in the form a request uses,
+  // so a page linked as `/notes%20%231` would otherwise be written to a file literally called
+  // `notes%20%231.html` — which the host, decoding before it looks, would never find.
   let outputPath = (pathname: string) =>
-    outputPathFor(behavior, `/${stripBase(pathname, base)}`).replace(/^\/+/, '')
+    outputPathFor(behavior, `/${stripBase(decodeURIComponent(pathname), base)}`)
+      .replace(/^\/+/, '')
 
   await Deno.remove(outDir, { recursive: true }).catch(() => {})
 
