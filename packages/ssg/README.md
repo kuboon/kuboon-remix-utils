@@ -226,16 +226,22 @@ or any other format — is handled, which is what keeps it and its dependencies 
 ```ts
 export function markdown(context: { base: string }): FileTransform {
   return {
-    match: (file) => file.endsWith('.md'),
-    path: (file) =>
-      `/${file.replace(/\.md$/, '').replace(/(^|\/)index$/, '')}`.replace(/\/$/, '') || '/',
-    render: async (absolutePath) => ({
-      body: /* your HTML */ '',
+    match: (path) => path.endsWith('.md'),
+    path: (path) =>
+      `/${path.replace(/\.md$/, '').replace(/(^|\/)index$/, '')}`.replace(/\/$/, '') || '/',
+    render: async (file) => ({
+      body: /* your HTML, from await Deno.readTextFile(file.url) */ '',
       contentType: 'text/html; charset=utf-8',
     }),
   }
 }
 ```
+
+`match` and `path` are handed the file's path under the tree's root, because they answer questions
+about the name. `render` is the only one that opens anything, so it gets the file itself —
+`{ path, url }`, the same name plus a `file:` URL. Both things a transform does with that URL take
+one (`Deno.readTextFile(url)`, `import(url.href)`), so no transform has to get the escaping right
+on its own.
 
 Transforms are tried in order, so a site can have more than one format. The fixture has two: `.md`
 for text, and `.tsx` for pages that need an island. A page that wants interactivity is a component

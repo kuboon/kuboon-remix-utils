@@ -18,8 +18,8 @@ export function markdown(context: { base: string }): FileTransform {
       return `/${withoutExtension}`.replace(/\/$/, '') || '/'
     },
 
-    async render(absolutePath) {
-      let source = await Deno.readTextFile(absolutePath)
+    async render(file) {
+      let source = await Deno.readTextFile(file.url)
       let [title, ...rest] = source.split('\n')
 
       return {

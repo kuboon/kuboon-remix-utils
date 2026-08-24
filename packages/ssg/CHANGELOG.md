@@ -2,6 +2,21 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.5.0
+
+- `FileTransform.render` takes one argument instead of two. It used to be handed `(absolutePath, relativePath)` — the same fact spelled twice, since the tree knows its own root. It now gets a `SourceFile`:
+
+  ```ts
+  interface SourceFile {
+    readonly path: string // under the tree's root — what match() and path() saw
+    readonly url: URL // where to read it
+  }
+  ```
+
+  A URL rather than a path, because both things a transform does with it take one — `Deno.readTextFile(url)` and `import(url.href)` — so no transform has to build `file://${absolutePath}` and get the escaping right. The two that shipped with 0.4.0 both did that by hand, and one of them did it wrong: a page whose file name contains a space or a `#` failed to load. Pinned by a test.
+
+  `match` and `path` still take a plain string. They answer questions about the name; `render` is the only one that opens anything.
+
 ## 0.4.0
 
 - Added `@kuboon/remix-ssg/site`: the parts a static site is assembled from, and one CLI entry, `build.ts`. A site wires the parts together itself, in a `router.ts` it owns:

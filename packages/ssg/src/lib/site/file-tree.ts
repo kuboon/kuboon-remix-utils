@@ -15,6 +15,25 @@ import * as path from 'node:path'
 import { joinBase, normalizeBase } from './base.ts'
 import type { SiteMiddleware } from './middleware.ts'
 
+/** A file in the tree, as a transform sees it. */
+export interface SourceFile {
+  /**
+   * Path under the tree's root, with `/` separators — the file's identity here.
+   *
+   * This is what `match` and `path` are given, so a transform naming something after the file
+   * (a slug, a title fallback, an error message) uses the same string they did.
+   */
+  readonly path: string
+  /**
+   * Where to read it from.
+   *
+   * A `file:` URL rather than a path, because both things a transform does with it take one:
+   * `Deno.readTextFile(url)` and `import(url.href)` — and neither has to get the escaping right
+   * on its own.
+   */
+  readonly url: URL
+}
+
 /** Renders the files it claims. */
 export interface FileTransform {
   /**
@@ -27,7 +46,9 @@ export interface FileTransform {
    * The URL path the file is served at, relative to the mount point.
    *
    * Derived from the path alone, and cheaply: the tree needs every route before anything is
-   * rendered, so this may not read the file.
+   * rendered, so this may not read the file. That is also why this and {@link match} are handed a
+   * plain string — they answer questions about the name, and {@link render} is the only one that
+   * opens anything.
    *
    * @param relativePath Path under the tree's root
    * @returns A path starting with `/`
@@ -36,14 +57,10 @@ export interface FileTransform {
   /**
    * Renders one file.
    *
-   * @param absolutePath The file on disk
-   * @param relativePath Its path under the tree's root
+   * @param file The file: its path in the tree, and where to read it
    * @returns The body and its media type
    */
-  render(
-    absolutePath: string,
-    relativePath: string,
-  ): Promise<{ body: string | Uint8Array; contentType: string }>
+  render(file: SourceFile): Promise<{ body: string | Uint8Array; contentType: string }>
 }
 
 /** Options for {@link createFileTree}. */
@@ -59,8 +76,7 @@ export interface FileTreeOptions {
 }
 
 interface Entry {
-  absolutePath: string
-  relativePath: string
+  file: SourceFile
   transform?: FileTransform
 }
 
@@ -102,13 +118,12 @@ export async function createFileTree(options: FileTreeOptions): Promise<SiteMidd
       if (existing !== undefined) {
         throw new Error(
           `Two files in "${rootDir}" are served at "${servedAt}": ` +
-            `"${existing.relativePath}" and "${relativePath}".`,
+            `"${existing.file.path}" and "${relativePath}".`,
         )
       }
 
       entries.set(servedAt, {
-        absolutePath: path.join(rootDir, relativePath),
-        relativePath,
+        file: { path: relativePath, url: fileUrl(path.join(rootDir, relativePath)) },
         transform,
       })
     }
@@ -126,12 +141,10 @@ export async function createFileTree(options: FileTreeOptions): Promise<SiteMidd
 
       let cached = rendered.get(pathname)
       if (cached === undefined) {
-        let produced = entry.transform
-          ? await entry.transform.render(entry.absolutePath, entry.relativePath)
-          : {
-            body: await Deno.readFile(entry.absolutePath) as string | Uint8Array,
-            contentType: contentTypeFor(entry.relativePath),
-          }
+        let produced = entry.transform ? await entry.transform.render(entry.file) : {
+          body: await Deno.readFile(entry.file.url) as string | Uint8Array,
+          contentType: contentTypeFor(entry.file.path),
+        }
         cached = { ...produced, etag: await etagFor(produced.body) }
         rendered.set(pathname, cached)
       }
@@ -158,6 +171,13 @@ export async function createFileTree(options: FileTreeOptions): Promise<SiteMidd
 
     reload: scan,
   }
+}
+
+/** A `file:` URL for an absolute path, with every segment escaped. */
+function fileUrl(absolutePath: string): URL {
+  let url = new URL('file://')
+  url.pathname = absolutePath.split('/').map(encodeURIComponent).join('/')
+  return url
 }
 
 function notFound(): Response {

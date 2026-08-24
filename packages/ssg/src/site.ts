@@ -41,7 +41,7 @@
 export { compose } from './lib/site/middleware.ts'
 export type { SiteMiddleware } from './lib/site/middleware.ts'
 export { createFileTree } from './lib/site/file-tree.ts'
-export type { FileTransform, FileTreeOptions } from './lib/site/file-tree.ts'
+export type { FileTransform, FileTreeOptions, SourceFile } from './lib/site/file-tree.ts'
 export { createIslands } from './lib/site/islands.ts'
 export type { Islands, IslandsOptions } from './lib/site/islands.ts'
 export { joinBase, normalizeBase, stripBase } from './lib/site/base.ts'
