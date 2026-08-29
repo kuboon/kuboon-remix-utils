@@ -5,8 +5,8 @@
  * to the chunk the bundler emitted, plus the scripts that load them.
  */
 
-import { renderToString } from 'remix/ui/server'
-import type { RemixNode } from 'remix/ui'
+import { renderToString } from '@remix-run/ui/server'
+import type { RemixNode } from '@remix-run/ui'
 
 import { ISLAND_MAP_ELEMENT_ID } from '../../../../client.ts'
 

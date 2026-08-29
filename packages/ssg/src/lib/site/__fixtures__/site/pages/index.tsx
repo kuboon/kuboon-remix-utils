@@ -2,7 +2,7 @@
  * A page that uses islands, written the way you would write one: import the component and place it.
  */
 
-import type { RemixNode } from 'remix/ui'
+import type { RemixNode } from '@remix-run/ui'
 
 import { Counter } from '../islands/counter.tsx'
 import { Total } from '../islands/total.tsx'

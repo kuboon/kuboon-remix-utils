@@ -1,4 +1,4 @@
-import { on } from 'remix/ui'
+import { on } from '@remix-run/ui'
 import { island } from '../../../../../client.ts'
 import { clicks } from './store.ts'
 

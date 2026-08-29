@@ -1,6 +1,6 @@
 {
   "name": "@kuboon/remix-ssg",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
@@ -14,7 +14,9 @@
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
     "@std/cli/parse-args": "jsr:@std/cli@^1/parse-args",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
-    "remix": "npm:remix@3.0.0-beta.5",
+    "@remix-run/fetch-router": "npm:@remix-run/fetch-router@^0.21.0",
+    "@remix-run/ui": "npm:@remix-run/ui@^0.7.0",
+    "@remix-run/ui/server": "npm:@remix-run/ui@^0.7.0/server",
     "es-module-lexer": "npm:es-module-lexer@^2.3.0"
   },
   "tasks": {
@@ -35,7 +37,7 @@
   },
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "remix/ui",
+    "jsxImportSource": "@remix-run/ui",
     "lib": [
       "deno.ns",
       "deno.unstable",

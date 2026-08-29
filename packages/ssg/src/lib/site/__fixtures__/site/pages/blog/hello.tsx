@@ -2,7 +2,7 @@
  * A nested page that places one island, so a page ships only the chunks it actually uses.
  */
 
-import type { RemixNode } from 'remix/ui'
+import type { RemixNode } from '@remix-run/ui'
 
 import { Counter } from '../../islands/counter.tsx'
 

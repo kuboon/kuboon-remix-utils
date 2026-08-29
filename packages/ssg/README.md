@@ -2,7 +2,7 @@
 
 Static site generation (SSG) for [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router). Pre-render a Remix router to static HTML files at build time.
 
-`remix-ssg` drives your router in-process with `router.fetch()`, spiders the links and asset references in the rendered HTML, and writes every response to disk as a static site. Rendering happens inside your router (via `remix/ui/server`), so this package adds the crawl-and-write layer, not a renderer. It is a generalized extraction of the prerenderer that builds the Remix docs site.
+`remix-ssg` drives your router in-process with `router.fetch()`, spiders the links and asset references in the rendered HTML, and writes every response to disk as a static site. Rendering happens inside your router (via `@remix-run/ui/server`), so this package adds the crawl-and-write layer, not a renderer. It is a generalized extraction of the prerenderer that builds the Remix docs site.
 
 ## Features
 
@@ -34,7 +34,7 @@ import { createRouter } from 'remix/fetch-router'
 import { prerender } from '@kuboon/remix-ssg/node'
 
 let router = createRouter()
-// ...map your routes (which render HTML via remix/ui/server)...
+// ...map your routes (which render HTML via @remix-run/ui/server)...
 
 let stats = await prerender({
   router,
