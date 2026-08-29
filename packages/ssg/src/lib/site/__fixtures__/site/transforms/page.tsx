@@ -5,7 +5,7 @@
  * Markdown stays text.
  */
 
-import type { RemixNode } from 'remix/ui'
+import type { RemixNode } from '@remix-run/ui'
 
 import type { FileTransform } from '../../../file-tree.ts'
 import { renderPage } from '../layout.tsx'

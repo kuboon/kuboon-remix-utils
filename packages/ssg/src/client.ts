@@ -17,8 +17,14 @@
  * name -> URL map it got from the bundler. Nothing in the browser predicts anything.
  */
 
-import { clientEntry, run } from 'remix/ui'
-import type { EntryComponent, Handle, LoadModule, RemixNode, SerializableProps } from 'remix/ui'
+import { clientEntry, run } from '@remix-run/ui'
+import type {
+  EntryComponent,
+  Handle,
+  LoadModule,
+  RemixNode,
+  SerializableProps,
+} from '@remix-run/ui'
 
 /** Scheme for logical island ids, so a real URL can never be mistaken for one. */
 const ISLAND_SCHEME = 'island:'

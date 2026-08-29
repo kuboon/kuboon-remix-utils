@@ -2,6 +2,21 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.6.0
+
+- Depends on the `@remix-run/*` packages it actually uses instead of the `remix` meta-package. `remix` pins a compatible set of ~45 packages, so importing it for `remix/ui` also pulled data-table, its three dialect drivers, the CLI, a tar parser and the rest into every consumer's `node_modules`. This package needs two of them:
+
+  ```diff
+  - "remix": "npm:remix@3.0.0-beta.5"
+  + "@remix-run/fetch-router": "npm:@remix-run/fetch-router@^0.21.0"
+  + "@remix-run/ui": "npm:@remix-run/ui@^0.7.0"
+  + "@remix-run/ui/server": "npm:@remix-run/ui@^0.7.0/server"
+  ```
+
+  `compilerOptions.jsxImportSource` moves from `remix/ui` to `@remix-run/ui` with it.
+
+- Updated from the beta.5 set to the beta.10 one: `@remix-run/ui` 0.4.0 → 0.7.0 and `@remix-run/fetch-router` 0.20.1 → 0.21.0. Nothing this package does was touched by the breaking changes in between — it defines no `resolveFrame`, builds no `href()` with search params, and declares no route patterns.
+
 ## 0.5.2
 
 - `buildSite` named output files after a URL's escapes. A crawl carries paths in the form a request uses, so a page linked as `/notes%20%231` was written to a file literally called `notes%20%231.html` — which a static host, decoding the request before it looks, would never find. Output paths are decoded now. This is the last of the three places the same confusion lived; the fixture site has a page whose name needs escaping, reached through an ordinary link, so a build proves it end to end.

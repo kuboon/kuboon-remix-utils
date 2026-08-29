@@ -75,7 +75,7 @@ export interface PrerenderStats {
  * @returns Counts and the list of files written.
  * @example
  * ```ts
- * import { createRouter } from 'remix/fetch-router'
+ * import { createRouter } from '@remix-run/fetch-router'
  * import { prerender } from '@kuboon/remix-ssg/node'
  *
  * let router = createRouter()
