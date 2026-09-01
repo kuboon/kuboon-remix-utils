@@ -2,6 +2,12 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.7.0
+
+- `@remix-run/ui` 0.7.0 → 0.8.0, the `remix@3.0.0-rc.1` set. `spaResponse` is new and `addEventListeners` is gone; this package used neither. `@remix-run/fetch-router` stays at `^0.21.0` — rc.1 pins the same range.
+
+  The bump is a minor here rather than a patch because a `^0.8.0` range excludes 0.7: a consumer still on `@remix-run/ui` 0.7 would resolve a second copy of the runtime, which is exactly what 0.6.0 set out to stop.
+
 ## 0.6.0
 
 - Depends on the `@remix-run/*` packages it actually uses instead of the `remix` meta-package. `remix` pins a compatible set of ~45 packages, so importing it for `remix/ui` also pulled data-table, its three dialect drivers, the CLI, a tar parser and the rest into every consumer's `node_modules`. This package needs two of them:

@@ -10,9 +10,9 @@
     "npm:@libsql/client@~0.17.4": "0.17.4",
     "npm:@modelcontextprotocol/server@2": "2.0.0",
     "npm:@remix-run/assert@0.3": "0.3.0",
-    "npm:@remix-run/data-table@0.4": "0.4.0",
+    "npm:@remix-run/data-table@0.5": "0.5.0",
     "npm:@remix-run/fetch-router@0.21": "0.21.0",
-    "npm:@remix-run/ui@0.7": "0.7.0",
+    "npm:@remix-run/ui@0.8": "0.8.0",
     "npm:cjs-module-lexer@^2.2.1": "2.2.1",
     "npm:es-module-lexer@^2.3.0": "2.3.2",
     "npm:es-module-lexer@^2.3.2": "2.3.2"
@@ -136,8 +136,8 @@
     "@remix-run/assert@0.3.0": {
       "integrity": "sha512-GBA9klvJdG5YSTwRNur54LQcfqDOtir+x1TDbv3dzB9FS2Li9CEiRLp1EpBcaYrj4ByO03WJCWFBiY8bTMy4vQ=="
     },
-    "@remix-run/data-table@0.4.0": {
-      "integrity": "sha512-Flh2PP85hhjNZikxaQvdsrgna3Qv1OWJ/l7RTAKD+K9YdpVL+VnJMOKjyiMzehNBPuCVZB9ST7dF+5A/nfVXtg=="
+    "@remix-run/data-table@0.5.0": {
+      "integrity": "sha512-ntc23qDYnSCA2iq1r2L5+u/9MH+5207mopekOM4NRsVDrMt0e14DVq37JhfVmzcZDCb8lx7iP+D+H8i9a9IiCw=="
     },
     "@remix-run/fetch-router@0.21.0": {
       "integrity": "sha512-dN3Lsd4dHAV0USTF3Dm04effXcdr7GMgXiqeozTFDfvVIx2DbRAl94bwF6UdAWurgTOK2Oyz4cs9uadW/ylWXA==",
@@ -148,8 +148,8 @@
     "@remix-run/route-pattern@0.24.0": {
       "integrity": "sha512-w0/lhgY40l2GrBQjJIOeYWIuKm1rxlOsc9Hvt+nyydnka0v4aI9Vv0VK4XzLD3aP08JzGtTlxFxwf1PZ8SGdLg=="
     },
-    "@remix-run/ui@0.7.0": {
-      "integrity": "sha512-SPgbmHOnHAGxZiyJhW7wxGBnk7lYdY5GlYj1Chj5hpHH+3IAChpCcwUwniqbN8Wddwf6G4oitN/YhGFarqPIUg==",
+    "@remix-run/ui@0.8.0": {
+      "integrity": "sha512-4OdZ3oj0zbyVVaCFT/x2vjK5YxpD63KpLONkLZ2QVKIEBcLjJUGSenp2f08BOzC8oythLHCJgzHLKKulYJpIQA==",
       "dependencies": [
         "@types/dom-navigation"
       ]
@@ -231,7 +231,7 @@
           "jsr:@std/testing@1",
           "npm:@libsql/client@~0.17.4",
           "npm:@remix-run/assert@0.3",
-          "npm:@remix-run/data-table@0.4"
+          "npm:@remix-run/data-table@0.5"
         ]
       },
       "packages/mcp": {
@@ -249,7 +249,7 @@
           "jsr:@std/testing@1",
           "npm:@remix-run/assert@0.3",
           "npm:@remix-run/fetch-router@0.21",
-          "npm:@remix-run/ui@0.7",
+          "npm:@remix-run/ui@0.8",
           "npm:es-module-lexer@^2.3.0"
         ]
       }

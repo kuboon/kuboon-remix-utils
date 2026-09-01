@@ -2,6 +2,10 @@
 
 This is the changelog for [`data-table-sqlite-turso`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/data-table-sqlite-turso). It follows [semantic versioning](https://semver.org/).
 
+## 0.3.1
+
+- `@remix-run/data-table` 0.4.0 → 0.5.0, the `remix@3.0.0-rc.1` set. The release is additive for a dialect package: `DatabaseDriver` is byte-for-byte unchanged, `index.d.ts` exports the same surface, and the two files that moved add a `rollback` command to the CLI options union and widen `and`/`or` to take object shorthand alongside predicates. Nothing here needed changing.
+
 ## 0.3.0
 
 - Added a migration CLI, exported as `./cli`, because `remix db` cannot drive this database: the Remix CLI builds its database from `remix.json`'s `db.adapter`, whose `type` is a closed set (`Expected one of: sqlite, postgres, mysql at db.adapter.type`) with no plugin hook.
