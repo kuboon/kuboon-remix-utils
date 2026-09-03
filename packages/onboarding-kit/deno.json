@@ -1,0 +1,43 @@
+{
+  "name": "@kuboon/remix-onboarding-kit",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ui": "./src/ui.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "imports": {
+    "@remix-run/ui": "npm:@remix-run/ui@^0.8.0",
+    "@remix-run/ui/anchor": "npm:@remix-run/ui@^0.8.0/anchor",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+    "@std/expect": "jsr:@std/expect@^1"
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-env",
+    "check": "deno check src"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "schema.json",
+      "README.md",
+      "LICENSE",
+      "deno.json"
+    ],
+    "exclude": [
+      "**/*.test.ts",
+      "**/*.test.tsx"
+    ]
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@remix-run/ui",
+    "lib": [
+      "deno.ns",
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ]
+  }
+}

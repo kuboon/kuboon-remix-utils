@@ -5,7 +5,10 @@
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/cli@1": "1.0.32",
     "jsr:@std/encoding@1": "1.0.11",
+    "jsr:@std/expect@1": "1.0.20",
+    "jsr:@std/internal@^1.0.12": "1.0.14",
     "jsr:@std/internal@^1.0.14": "1.0.14",
+    "jsr:@std/path@^1.1.6": "1.1.6",
     "jsr:@std/testing@1": "1.0.20",
     "npm:@libsql/client@~0.17.4": "0.17.4",
     "npm:@modelcontextprotocol/server@2": "2.0.0",
@@ -22,7 +25,10 @@
       "integrity": "a6d94408de5e6bacac404f8f6963c8b8cc278cfd1a878aa2f06b34a083d6bfee"
     },
     "@std/assert@1.0.19": {
-      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e"
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.12"
+      ]
     },
     "@std/cli@1.0.32": {
       "integrity": "188b3a100d6202d64e3f5bd3d799c7fa4f6d77f92cc65eb7f641c1fa0aa92a66"
@@ -30,14 +36,28 @@
     "@std/encoding@1.0.11": {
       "integrity": "e7cef2f0b3153bccc17431e7c864a1de03a4b6d9647389c43e08aaa775d37385"
     },
+    "@std/expect@1.0.20": {
+      "integrity": "ffc4f3c33f732417e3e9acf3d995818c89984313c37d933b9ebbb4571d2887e9",
+      "dependencies": [
+        "jsr:@std/assert",
+        "jsr:@std/internal@^1.0.14",
+        "jsr:@std/path"
+      ]
+    },
     "@std/internal@1.0.14": {
       "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
+    },
+    "@std/path@1.1.6": {
+      "integrity": "c68485c2a4dfbb5ae3cc74fae4e8c4e5d874cf8a8ed12927917235c758b46cbe",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.14"
+      ]
     },
     "@std/testing@1.0.20": {
       "integrity": "21380ed438672762e4ec549cbf4fe41c5b68f5598773a30b64abe7375513e721",
       "dependencies": [
         "jsr:@std/assert",
-        "jsr:@std/internal"
+        "jsr:@std/internal@^1.0.14"
       ]
     }
   },
@@ -240,6 +260,13 @@
           "npm:@modelcontextprotocol/server@2",
           "npm:@remix-run/assert@0.3",
           "npm:@remix-run/fetch-router@0.21"
+        ]
+      },
+      "packages/onboarding-kit": {
+        "dependencies": [
+          "jsr:@std/expect@1",
+          "jsr:@std/testing@1",
+          "npm:@remix-run/ui@0.8"
         ]
       },
       "packages/ssg": {
