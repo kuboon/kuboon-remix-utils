@@ -3,7 +3,6 @@
     "./packages/assets-deno",
     "./packages/data-table-sqlite-turso",
     "./packages/mcp",
-    "./packages/onboarding-kit",
     "./packages/ssg"
   ],
   "fmt": {

@@ -11,7 +11,6 @@ This is a [Deno workspace](https://docs.deno.com/runtime/fundamentals/workspaces
 | [`assets-deno`](./packages/assets-deno)                         | [`@kuboon/remix-assets-deno`](https://jsr.io/@kuboon/remix-assets-deno)                         | JSR-capable on-demand asset server for `remix/fetch-router`                                          |
 | [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL database for `@remix-run/data-table`, with a migration CLI replacing `remix db` |
 | [`mcp`](./packages/mcp)                                         | [`@kuboon/remix-mcp`](https://jsr.io/@kuboon/remix-mcp)                                         | Serve an MCP server from a `remix/fetch-router` route                                                |
-| [`onboarding-kit`](./packages/onboarding-kit)                   | [`@kuboon/remix-onboarding-kit`](https://jsr.io/@kuboon/remix-onboarding-kit)                   | JSON-defined product tours (spotlight walkthroughs) for `@remix-run/ui`                              |
 | [`ssg`](./packages/ssg)                                         | [`@kuboon/remix-ssg`](https://jsr.io/@kuboon/remix-ssg)                                         | Static site generation (prerender) for `remix/fetch-router`                                          |
 
 ## Claude Code plugins
