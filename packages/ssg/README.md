@@ -257,21 +257,19 @@ to have read.
 
 ### `htmlDocument(node, options?): Response`
 
-A Remix node tree as a complete HTML document response. Two details it exists to get right, neither
-of which fails loudly:
+A Remix node tree as a complete HTML document response — `renderToStream` piped into
+[`createHtmlResponse`](https://github.com/remix-run/remix/tree/main/packages/response#html-responses),
+which supplies the doctype (prepended lazily, reading only the first chunk to see whether one is
+already there) and `content-type: text/html; charset=UTF-8`.
 
-- **The doctype.** `@remix-run/ui` never emits one — `renderToStream` does not add it, and the
-  runtime only strips doctypes off frame content it receives — so a document without one renders in
-  quirks mode.
-- **The flush marker.** `renderToString` is `renderToStream` with `stripFlushMarkers()` over the
-  result, and the marker it strips, `<!-- rmx:flush document -->`, is how the client runtime
-  recognises a whole document rather than a fragment. Serve pages without it and, on any page
-  carrying an island, an internal link changes the URL and leaves the page alone: no error, no
-  console warning, and the fetch returning 200 the whole time. So this streams, and puts the
-  doctype in front of the stream rather than buffering to add it.
+What this adds is the choice of renderer, and it is the part that is easy to get wrong and does not
+fail loudly. `renderToString` is `renderToStream` with `stripFlushMarkers()` over the result, and
+the marker it strips, `<!-- rmx:flush document -->`, is how the client runtime recognises a whole
+document rather than a fragment. Serve pages without it and, on any page carrying an island, an
+internal link changes the URL and leaves the page alone: no error, no console warning, and the
+fetch returning 200 the whole time. So a page rendered for serving streams, always.
 
-`content-type` defaults to `text/html; charset=utf-8`. Anything else `renderToStream` takes is
-passed through, and `response` sets the status and headers.
+Anything `renderToStream` takes is passed through; `response` sets the status and headers.
 
 Transforms are tried in order, so a site can have more than one format. The fixture has two: `.md`
 for text, and `.tsx` for pages that need an island. A page that wants interactivity is a component

@@ -5,7 +5,7 @@ import type { RemixNode } from '@remix-run/ui'
 import { htmlDocument } from './document.ts'
 
 describe('htmlDocument', () => {
-  it('opens with a doctype, which remix/ui never emits itself', async () => {
+  it('opens with a doctype, which the renderer never emits itself', async () => {
     let html = await htmlDocument(
       <html lang='en'>
         <head>
@@ -36,7 +36,7 @@ describe('htmlDocument', () => {
 
   it('defaults to an HTML content type, and takes an override', async () => {
     let plain = htmlDocument(<html lang='en'></html>)
-    assert.equal(plain.headers.get('content-type'), 'text/html; charset=utf-8')
+    assert.equal(plain.headers.get('content-type'), 'text/html; charset=UTF-8')
 
     let custom = htmlDocument(<html lang='en'></html>, {
       response: { status: 404, headers: { 'content-type': 'text/html' } },

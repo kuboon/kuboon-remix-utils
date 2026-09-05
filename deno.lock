@@ -12,6 +12,7 @@
     "npm:@remix-run/assert@0.3": "0.3.0",
     "npm:@remix-run/data-table@0.5": "0.5.0",
     "npm:@remix-run/fetch-router@0.21": "0.21.0",
+    "npm:@remix-run/response@~0.3.8": "0.3.8",
     "npm:@remix-run/ui@0.8": "0.8.0",
     "npm:cjs-module-lexer@^2.2.1": "2.2.1",
     "npm:es-module-lexer@^2.3.0": "2.3.2",
@@ -145,6 +146,23 @@
         "@remix-run/route-pattern"
       ]
     },
+    "@remix-run/headers@0.21.1": {
+      "integrity": "sha512-DRhRveigepAQDUIi0MrOFhpcl3/KTv/fkpIhulv7Asv1pUwM8RpY2ENjdI8lfii6Z3MEsWtYhGt6If8bi6bYpQ=="
+    },
+    "@remix-run/html-template@0.3.1": {
+      "integrity": "sha512-4yhaBtfh1iVC1razTr+ehu1xmKia0zvE4GWQ6JF2IRiA3kmw+DlrdNFEFqx5Wn1eXAM0vxxcJLdLD7e0XMzH5A=="
+    },
+    "@remix-run/mime@0.4.2": {
+      "integrity": "sha512-KpZZxBYIrLsvUtt2ZdwK+E2ClVmyvW11Nej6fPgwJpohBMpbCHtR78wtCTv0vqvK5ckLZ7ks2q4pV5dMYFypiA=="
+    },
+    "@remix-run/response@0.3.8": {
+      "integrity": "sha512-ydrfv+ykKBRQg6DTHU0mSbxbOcWc3m1O7UVivO5Rgrp+K1u4Z3nqbhaMDkHbCPEFhuv1sKlQwS0Z5ClO/jGAiQ==",
+      "dependencies": [
+        "@remix-run/headers",
+        "@remix-run/html-template",
+        "@remix-run/mime"
+      ]
+    },
     "@remix-run/route-pattern@0.24.0": {
       "integrity": "sha512-w0/lhgY40l2GrBQjJIOeYWIuKm1rxlOsc9Hvt+nyydnka0v4aI9Vv0VK4XzLD3aP08JzGtTlxFxwf1PZ8SGdLg=="
     },
@@ -249,6 +267,7 @@
           "jsr:@std/testing@1",
           "npm:@remix-run/assert@0.3",
           "npm:@remix-run/fetch-router@0.21",
+          "npm:@remix-run/response@~0.3.8",
           "npm:@remix-run/ui@0.8",
           "npm:es-module-lexer@^2.3.0"
         ]

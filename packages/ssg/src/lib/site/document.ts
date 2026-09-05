@@ -1,31 +1,26 @@
 /**
  * A Remix node tree as a complete HTML document response.
  *
- * This exists because two details are easy to get wrong and neither fails loudly.
+ * The doctype and the content type are `createHtmlResponse`'s job — it prepends `<!DOCTYPE html>`
+ * lazily, reading only the first chunk to see whether one is already there, so a streamed document
+ * stays streamed. What this adds is the choice of renderer, which is the part that is easy to get
+ * wrong and does not fail loudly.
  *
- * `@remix-run/ui` never emits a doctype — `renderToStream` does not add one and the runtime only
- * ever strips them off frame content it receives — so a document that does not carry one renders
- * in quirks mode.
- *
- * And the choice of renderer matters more than it looks. `renderToString` is `renderToStream` with
- * `stripFlushMarkers()` over the result, and the marker it strips,
- * `<!-- rmx:flush document -->`, is how the client runtime recognises a whole document rather than
- * a fragment. Serve pages without it and, on any page carrying an island, an internal link changes
- * the URL and leaves the page alone: no error, no console warning, and the fetch returning 200 the
- * whole time.
- *
- * So this streams, and prepends the doctype to the stream rather than buffering to add it.
+ * `renderToString` is `renderToStream` with `stripFlushMarkers()` over the result, and the marker
+ * it strips, `<!-- rmx:flush document -->`, is how the client runtime recognises a whole document
+ * rather than a fragment. Serve pages without it and, on any page carrying an island, an internal
+ * link changes the URL and leaves the page alone: no error, no console warning, and the fetch
+ * returning 200 the whole time. So a page rendered for serving streams, always.
  */
 
+import { createHtmlResponse } from '@remix-run/response/html'
 import { renderToStream } from '@remix-run/ui/server'
 import type { RemixNode } from '@remix-run/ui'
 import type { RenderToStreamOptions } from '@remix-run/ui/server'
 
-const DOCTYPE = new TextEncoder().encode('<!DOCTYPE html>')
-
 /** Options for {@link htmlDocument}. */
 export interface HtmlDocumentOptions extends RenderToStreamOptions {
-  /** Response init. `content-type` defaults to `text/html; charset=utf-8`. */
+  /** Response init — status and headers. */
   response?: ResponseInit
 }
 
@@ -49,23 +44,13 @@ export interface HtmlDocumentOptions extends RenderToStreamOptions {
 export function htmlDocument(node: RemixNode, options?: HtmlDocumentOptions): Response {
   let { response, ...render } = options ?? {}
 
-  let headers = new Headers(response?.headers)
-  if (!headers.has('content-type')) headers.set('content-type', 'text/html; charset=utf-8')
-
-  let stream = renderToStream(node, {
-    onError(error) {
-      throw error
-    },
-    ...render,
-  })
-
-  return new Response(withDoctype(stream), { ...response, headers })
-}
-
-/** Puts the doctype in front of the rendered stream without waiting for it. */
-function withDoctype(html: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
-  return ReadableStream.from((async function* () {
-    yield DOCTYPE
-    yield* html
-  })())
+  return createHtmlResponse(
+    renderToStream(node, {
+      onError(error) {
+        throw error
+      },
+      ...render,
+    }),
+    response,
+  )
 }
