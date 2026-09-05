@@ -1,6 +1,6 @@
 {
   "name": "@kuboon/remix-ssg",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
@@ -32,6 +32,7 @@
     ],
     "exclude": [
       "**/*.test.ts",
+      "**/*.test.tsx",
       "**/__fixtures__"
     ]
   },

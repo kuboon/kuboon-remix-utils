@@ -40,6 +40,8 @@
 
 export { compose } from './lib/site/middleware.ts'
 export type { SiteMiddleware } from './lib/site/middleware.ts'
+export { htmlDocument } from './lib/site/document.ts'
+export type { HtmlDocumentOptions } from './lib/site/document.ts'
 export { createFileTree } from './lib/site/file-tree.ts'
 export type { FileTransform, FileTreeOptions, SourceFile } from './lib/site/file-tree.ts'
 export { createIslands } from './lib/site/islands.ts'

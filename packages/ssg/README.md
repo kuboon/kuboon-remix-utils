@@ -223,16 +223,21 @@ interface SiteMiddleware {
 A transform claims the files it renders and says where they are served. This is where Markdown —
 or any other format — is handled, which is what keeps it and its dependencies out of this package.
 
-```ts
+```tsx
 export function markdown(context: { base: string }): FileTransform {
   return {
     match: (path) => path.endsWith('.md'),
     path: (path) =>
       `/${path.replace(/\.md$/, '').replace(/(^|\/)index$/, '')}`.replace(/\/$/, '') || '/',
-    render: async (file) => ({
-      body: /* your HTML, from await Deno.readTextFile(file.url) */ '',
-      contentType: 'text/html; charset=utf-8',
-    }),
+    render: async (file) =>
+      htmlDocument(
+        <html lang='en'>
+          <head>
+            <title>…</title>
+          </head>
+          <body>{parse(await Deno.readTextFile(file.url))}</body>
+        </html>,
+      ),
   }
 }
 ```
@@ -242,6 +247,31 @@ about the name. `render` is the only one that opens anything, so it gets the fil
 `{ path, url }`, the same name plus a `file:` URL. Both things a transform does with that URL take
 one (`Deno.readTextFile(url)`, `import(url.href)`), so no transform has to get the escaping right
 on its own.
+
+`render` returns a `Response`, so a transform answers in the vocabulary it is already holding
+rather than unwrapping one into a body and a content type for the tree to wrap up again. Status and
+headers are carried through. The tree reads the body once and keeps the bytes — an etag has to hash
+them, and every later request for that path is answered from them — so the response may stream, but
+it is buffered on the way through and a transform should not hand back something it cannot afford
+to have read.
+
+### `htmlDocument(node, options?): Response`
+
+A Remix node tree as a complete HTML document response. Two details it exists to get right, neither
+of which fails loudly:
+
+- **The doctype.** `@remix-run/ui` never emits one — `renderToStream` does not add it, and the
+  runtime only strips doctypes off frame content it receives — so a document without one renders in
+  quirks mode.
+- **The flush marker.** `renderToString` is `renderToStream` with `stripFlushMarkers()` over the
+  result, and the marker it strips, `<!-- rmx:flush document -->`, is how the client runtime
+  recognises a whole document rather than a fragment. Serve pages without it and, on any page
+  carrying an island, an internal link changes the URL and leaves the page alone: no error, no
+  console warning, and the fetch returning 200 the whole time. So this streams, and puts the
+  doctype in front of the stream rather than buffering to add it.
+
+`content-type` defaults to `text/html; charset=utf-8`. Anything else `renderToStream` takes is
+passed through, and `response` sets the status and headers.
 
 Transforms are tried in order, so a site can have more than one format. The fixture has two: `.md`
 for text, and `.tsx` for pages that need an island. A page that wants interactivity is a component

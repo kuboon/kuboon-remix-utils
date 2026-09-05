@@ -38,15 +38,12 @@ export function page(
         urls[name] = chunk
       }
 
-      return {
-        body: await renderPage({
-          title: module.title ?? file.path,
-          base: context.base,
-          islandUrls: urls,
-          children: module.default(),
-        }),
-        contentType: 'text/html; charset=utf-8',
-      }
+      return renderPage({
+        title: module.title ?? file.path,
+        base: context.base,
+        islandUrls: urls,
+        children: module.default(),
+      })
     },
   }
 }

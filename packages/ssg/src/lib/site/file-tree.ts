@@ -57,10 +57,15 @@ export interface FileTransform {
   /**
    * Renders one file.
    *
+   * A `Response`, so a transform says what it means in the vocabulary it is already holding —
+   * `htmlDocument(<html>…</html>)` and nothing else — instead of unwrapping one into a body and a
+   * content type for the tree to wrap up again. Status and headers are carried through; the tree
+   * reads the body once, keeps the bytes, and answers from those.
+   *
    * @param file The file: its path in the tree, and where to read it
-   * @returns The body and its media type
+   * @returns The response to serve at this file's path
    */
-  render(file: SourceFile): Promise<{ body: string | Uint8Array; contentType: string }>
+  render(file: SourceFile): Promise<Response>
 }
 
 /** Options for {@link createFileTree}. */
@@ -78,6 +83,14 @@ export interface FileTreeOptions {
 interface Entry {
   file: SourceFile
   transform?: FileTransform
+}
+
+/** One path's response, read into bytes so it can be hashed and served more than once. */
+interface Rendered {
+  body: Uint8Array<ArrayBuffer>
+  status: number
+  headers: Headers
+  etag: string
 }
 
 /**
@@ -102,7 +115,7 @@ export async function createFileTree(options: FileTreeOptions): Promise<SiteMidd
   let transforms = options.transforms ?? []
 
   let entries = new Map<string, Entry>()
-  let rendered = new Map<string, { body: string | Uint8Array; contentType: string; etag: string }>()
+  let rendered = new Map<string, Rendered>()
 
   async function scan(): Promise<void> {
     entries.clear()
@@ -141,11 +154,21 @@ export async function createFileTree(options: FileTreeOptions): Promise<SiteMidd
 
       let cached = rendered.get(pathname)
       if (cached === undefined) {
-        let produced = entry.transform ? await entry.transform.render(entry.file) : {
-          body: await Deno.readFile(entry.file.url) as string | Uint8Array,
-          contentType: contentTypeFor(entry.file.path),
+        // A response body is read once, so the tree reads it here and keeps the bytes: an etag
+        // has to hash them, and every later request for this path is answered from them.
+        let produced = entry.transform
+          ? await entry.transform.render(entry.file)
+          : new Response(await Deno.readFile(entry.file.url), {
+            headers: { 'content-type': contentTypeFor(entry.file.path) },
+          })
+
+        let body = new Uint8Array(await produced.arrayBuffer())
+        cached = {
+          body,
+          status: produced.status,
+          headers: produced.headers,
+          etag: await etagFor(body),
         }
-        cached = { ...produced, etag: await etagFor(produced.body) }
         rendered.set(pathname, cached)
       }
 
@@ -156,12 +179,13 @@ export async function createFileTree(options: FileTreeOptions): Promise<SiteMidd
         })
       }
 
-      return new Response(request.method === 'HEAD' ? null : cached.body as BodyInit, {
-        headers: {
-          'content-type': cached.contentType,
-          etag: cached.etag,
-          'cache-control': cacheControl,
-        },
+      let headers = new Headers(cached.headers)
+      headers.set('etag', cached.etag)
+      headers.set('cache-control', cacheControl)
+
+      return new Response(request.method === 'HEAD' ? null : cached.body, {
+        status: cached.status,
+        headers,
       })
     },
 
@@ -230,8 +254,7 @@ function contentTypeFor(relativePath: string): string {
   return CONTENT_TYPES[path.extname(relativePath).toLowerCase()] ?? 'application/octet-stream'
 }
 
-async function etagFor(body: string | Uint8Array): Promise<string> {
-  let bytes = typeof body === 'string' ? new TextEncoder().encode(body) : body
+async function etagFor(bytes: Uint8Array): Promise<string> {
   let digest = await crypto.subtle.digest('SHA-1', bytes as BufferSource)
   let hex = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
   return `"${hex}"`
