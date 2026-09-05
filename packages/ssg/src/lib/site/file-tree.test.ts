@@ -11,10 +11,10 @@ let markdown: FileTransform = {
   match: (relativePath) => relativePath.endsWith('.md'),
   path: (relativePath) =>
     `/${relativePath.replace(/\.md$/, '').replace(/(^|\/)index$/, '')}`.replace(/\/$/, '') || '/',
-  render: async (file) => ({
-    body: `<html><body>${await Deno.readTextFile(file.url)}</body></html>`,
-    contentType: 'text/html; charset=utf-8',
-  }),
+  render: async (file) =>
+    new Response(`<html><body>${await Deno.readTextFile(file.url)}</body></html>`, {
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    }),
 }
 
 async function makeTree(

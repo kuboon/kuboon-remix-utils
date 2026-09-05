@@ -1,6 +1,6 @@
 {
   "name": "@kuboon/remix-ssg",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
@@ -12,6 +12,7 @@
   "imports": {
     "@kuboon/remix-assets-deno": "jsr:@kuboon/remix-assets-deno@^0.4.2",
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
+    "@remix-run/response/html": "npm:@remix-run/response@^0.3.8/html",
     "@std/cli/parse-args": "jsr:@std/cli@^1/parse-args",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
     "@remix-run/fetch-router": "npm:@remix-run/fetch-router@^0.21.0",
@@ -32,6 +33,7 @@
     ],
     "exclude": [
       "**/*.test.ts",
+      "**/*.test.tsx",
       "**/__fixtures__"
     ]
   },

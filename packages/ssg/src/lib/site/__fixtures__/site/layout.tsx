@@ -5,10 +5,10 @@
  * to the chunk the bundler emitted, plus the scripts that load them.
  */
 
-import { renderToString } from '@remix-run/ui/server'
 import type { RemixNode } from '@remix-run/ui'
 
 import { ISLAND_MAP_ELEMENT_ID } from '../../../../client.ts'
+import { htmlDocument } from '../../document.ts'
 
 export interface LayoutProps {
   title: string
@@ -18,11 +18,11 @@ export interface LayoutProps {
   children: RemixNode
 }
 
-export function renderPage(props: LayoutProps): Promise<string> {
+export function renderPage(props: LayoutProps): Response {
   let chunks = [...new Set(Object.values(props.islandUrls))]
   let home = props.base === '' ? '/' : props.base
 
-  return renderToString(
+  return htmlDocument(
     <html lang='en'>
       <head>
         <meta charset='utf-8' />
@@ -51,5 +51,5 @@ export function renderPage(props: LayoutProps): Promise<string> {
           : null}
       </body>
     </html>,
-  ).then((html) => `<!DOCTYPE html>${html}`)
+  )
 }

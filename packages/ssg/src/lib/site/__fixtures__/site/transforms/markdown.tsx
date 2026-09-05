@@ -22,15 +22,12 @@ export function markdown(context: { base: string }): FileTransform {
       let source = await Deno.readTextFile(file.url)
       let [title, ...rest] = source.split('\n')
 
-      return {
-        body: await renderPage({
-          title,
-          base: context.base,
-          islandUrls: {},
-          children: <p>{rest.join('\n').trim()}</p>,
-        }),
-        contentType: 'text/html; charset=utf-8',
-      }
+      return renderPage({
+        title,
+        base: context.base,
+        islandUrls: {},
+        children: <p>{rest.join('\n').trim()}</p>,
+      })
     },
   }
 }
