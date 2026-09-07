@@ -47,7 +47,7 @@ import { createAssetServer } from '@kuboon/remix-assets-deno'
 
 let assets = await createAssetServer({
   rootDir: new URL('..', import.meta.url).pathname,
-  entrypoints: ['client/nav_auth.tsx', 'client/signin_card.tsx', 'client/push_card.tsx'],
+  entrypoints: ['client/*.tsx'],
   configPath: 'client/deno.json',
 })
 
@@ -65,6 +65,24 @@ Run with `--allow-read --allow-env --allow-net`. `--allow-net` is only needed wh
 
 Your `deno.json`'s `compilerOptions` are honored, so a JSX config like
 `{ "jsx": "react-jsx", "jsxImportSource": "@remix-run/ui" }` needs no repeating here.
+
+### Naming the entrypoints
+
+An entrypoint may be a path, a `file:` URL, or a glob:
+
+```ts
+entrypoints: ;
+;['client/hydration.ts', 'islands/*.tsx', 'islands/showcase/*.tsx']
+```
+
+Globs are expanded once at startup and their matches sorted, so a build is reproducible; a pattern
+matching nothing is an error rather than an empty set. `islands/*.tsx` also leaves `islands/_lib/`
+alone by depth, without the underscore having to mean anything.
+
+Why expand at all, when [`@remix-run/assets`](https://github.com/remix-run/remix/tree/main/packages/assets)
+keeps globs as globs and compiles on demand? Because `mode: 'bundle'` cannot: `Deno.bundle` takes
+its entry points up front, and code splitting cannot know which module is shared until it knows
+every entry. The glob is the same idea; the expansion is what bundling costs.
 
 ### With Remix's render middleware
 
@@ -159,7 +177,7 @@ export const sessionStore: DpopSessionStore = new DpopSessionStore()
 
 ### `createAssetServer(options): Promise<DenoAssetServer>`
 
-- `entrypoints` — client entrypoints, relative to `rootDir` or absolute `file:` URLs (required)
+- `entrypoints` — client entrypoints: paths relative to `rootDir`, absolute `file:` URLs, or globs over `rootDir` (required)
 - `mode` — `'modules'` (default, one URL per module) or `'bundle'` (code-split chunks)
 - `bundle` — bundled-mode tuning: `minify` (default `true`), `keepNames`, `sourcemap` (`'linked'` by default, or `'inline'` / `'external'` / `'none'`), `external`
 - `rootDir` — directory entrypoints resolve against (default `Deno.cwd()`)

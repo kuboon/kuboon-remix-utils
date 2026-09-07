@@ -6,7 +6,9 @@
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/cli@1": "1.0.32",
     "jsr:@std/encoding@1": "1.0.11",
+    "jsr:@std/fs@^1.0.24": "1.0.24",
     "jsr:@std/internal@^1.0.14": "1.0.14",
+    "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/testing@1": "1.0.20",
     "npm:@libsql/client@~0.17.4": "0.17.4",
     "npm:@modelcontextprotocol/server@2": "2.0.0",
@@ -40,8 +42,21 @@
     "@std/encoding@1.0.11": {
       "integrity": "e7cef2f0b3153bccc17431e7c864a1de03a4b6d9647389c43e08aaa775d37385"
     },
+    "@std/fs@1.0.24": {
+      "integrity": "f3061b45b81673a2bece689da041df32d174be064c89eb6397fb5718d3fb7877",
+      "dependencies": [
+        "jsr:@std/internal",
+        "jsr:@std/path"
+      ]
+    },
     "@std/internal@1.0.14": {
       "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
+    },
+    "@std/path@1.1.6": {
+      "integrity": "c68485c2a4dfbb5ae3cc74fae4e8c4e5d874cf8a8ed12927917235c758b46cbe",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
     },
     "@std/testing@1.0.20": {
       "integrity": "21380ed438672762e4ec549cbf4fe41c5b68f5598773a30b64abe7375513e721",
@@ -247,6 +262,7 @@
         "dependencies": [
           "jsr:@deno/loader@0.5",
           "jsr:@std/encoding@1",
+          "jsr:@std/fs@^1.0.24",
           "jsr:@std/testing@1",
           "npm:@remix-run/assert@0.3",
           "npm:cjs-module-lexer@^2.2.1",

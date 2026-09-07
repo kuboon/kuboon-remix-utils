@@ -22,6 +22,7 @@ import { buildBundle } from './bundle.ts'
 import type { BundleModeOptions } from './bundle.ts'
 import { wrapCommonJs } from './cjs.ts'
 import { loadModuleGraph } from './loader.ts'
+import { expandEntrypoints } from './entrypoints.ts'
 import type { LoadModuleGraphOptions } from './loader.ts'
 import { candidatePathFor, PathRegistry } from './paths.ts'
 import { rewriteImports } from './rewrite.ts'
@@ -30,8 +31,12 @@ import type { ServedModule, ServerState } from './state.ts'
 /** Options for {@link createAssetServer}. */
 export interface AssetServerOptions {
   /**
-   * Client entrypoints, as paths relative to `rootDir` or absolute `file:` URLs. Every module
-   * reachable from these is compiled and served.
+   * Client entrypoints, as paths relative to `rootDir`, absolute `file:` URLs, or globs over
+   * `rootDir` — `'islands/*.tsx'` names every island without naming any of them. Every module
+   * reachable from an entrypoint is compiled and served.
+   *
+   * Globs are expanded once, at startup, and their matches sorted, so a build is reproducible. A
+   * pattern that matches nothing is an error rather than an empty set.
    */
   entrypoints: readonly string[]
   /** Directory that entrypoints and served paths are resolved against. Defaults to `Deno.cwd()`. */
@@ -256,14 +261,21 @@ function hrefFor(state: ServerState, entry: string, rootDir: string): string {
   return url
 }
 
-function compile(
+async function compile(
   options: AssetServerOptions,
   rootDir: string,
   basePath: string,
 ): Promise<ServerState> {
+  // Expanded here rather than in each mode, so both see the same list and a glob means the same
+  // thing whichever way the site is compiled.
+  let resolved = {
+    ...options,
+    entrypoints: await expandEntrypoints(options.entrypoints, rootDir),
+  }
+
   return options.mode === 'bundle'
-    ? buildBundle(options, rootDir, basePath)
-    : buildModules(options, rootDir, basePath)
+    ? buildBundle(resolved, rootDir, basePath)
+    : buildModules(resolved, rootDir, basePath)
 }
 
 async function buildModules(
