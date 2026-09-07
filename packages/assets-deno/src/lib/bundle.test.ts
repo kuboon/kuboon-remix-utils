@@ -185,4 +185,32 @@ describe('createAssetServer (bundled mode)', () => {
 
     assert.equal(server.entryUrl('entry_a.ts'), before, 'entry URLs are stable across a reload')
   })
+
+  it('lists an entry chunk and the chunks it imports in getPreloads', async () => {
+    let server = await createBundledServer()
+
+    let entry = server.entryUrl('entry_a.ts')
+    let preloads = await server.getPreloads('entry_a.ts')
+    let code = await fetchText(server, entry)
+    let shared = importedSpecifiers(code)
+
+    assert.equal(preloads[0], entry, 'the entry chunk comes first')
+    assert.equal(
+      preloads.length,
+      shared.length + 1,
+      'and every chunk it imports follows it',
+    )
+    for (let specifier of shared) {
+      let publicPath = new URL(specifier, `http://localhost${entry}`).pathname
+      assert.ok(preloads.includes(publicPath), `preloads include ${specifier}`)
+    }
+  })
+
+  it('answers getHref for a bundled entry named by file: URL', async () => {
+    let server = await createBundledServer()
+
+    let byUrl = await server.getHref(new URL('entry_a.ts', `file://${fixtureDir}`).href)
+
+    assert.equal(byUrl, server.entryUrl('entry_a.ts'))
+  })
 })

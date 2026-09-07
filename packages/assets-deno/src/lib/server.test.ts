@@ -239,3 +239,48 @@ describe('createAssetServer with CommonJS', () => {
     assert.equal(mod.counter, mod.default.counter, 'the named export is the same object')
   })
 })
+
+describe('createAssetServer entry lookups', () => {
+  it('answers getHref for an entrypoint named by path or by file: URL', async () => {
+    let server = await createFixtureServer()
+
+    let byName = server.entryUrl('entry_a.ts')
+    let byPath = await server.getHref(`${fixtureDir}entry_a.ts`)
+    let byUrl = await server.getHref(new URL('entry_a.ts', `file://${fixtureDir}`).href)
+
+    assert.equal(byPath, byName, 'an absolute path names the same entry')
+    assert.equal(byUrl, byName, 'so does the file: URL a module gets from import.meta.url')
+  })
+
+  it('refuses getHref for something that is not an entrypoint', async () => {
+    let server = await createFixtureServer()
+
+    await assert.rejects(
+      () => server.getHref(`${fixtureDir}shared.ts`),
+      /not one of this asset server's entrypoints/,
+    )
+  })
+
+  it('lists an entry and everything under it in getPreloads', async () => {
+    let server = await createFixtureServer()
+
+    let preloads = await server.getPreloads('entry_a.ts')
+    let shared = [...server.moduleUrls()].find(([s]) => s.endsWith('shared.ts'))?.[1]
+
+    assert.equal(preloads[0], server.entryUrl('entry_a.ts'), 'the entry comes first')
+    assert.ok(shared !== undefined && preloads.includes(shared), 'its import is in the list')
+  })
+
+  it('deduplicates across several entries in getPreloads', async () => {
+    let server = await createFixtureServer()
+
+    let preloads = await server.getPreloads(['entry_a.ts', 'entry_b.ts'])
+
+    assert.equal(
+      preloads.length,
+      new Set(preloads).size,
+      'the module both entries share is listed once',
+    )
+    assert.ok(preloads.includes(server.entryUrl('entry_b.ts')), 'both entries are listed')
+  })
+})
