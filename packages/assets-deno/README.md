@@ -66,6 +66,19 @@ Run with `--allow-read --allow-env --allow-net`. `--allow-net` is only needed wh
 Your `deno.json`'s `compilerOptions` are honored, so a JSX config like
 `{ "jsx": "react-jsx", "jsxImportSource": "@remix-run/ui" }` needs no repeating here.
 
+### With Remix's render middleware
+
+`render()` from [`@remix-run/render-middleware`](https://github.com/remix-run/remix/tree/main/packages/render-middleware) asks for an asset server structurally — `Pick<AssetServer, 'getHref' | 'getPreloads'>` — so this one goes straight in:
+
+```ts
+import { createRouter } from '@remix-run/fetch-router'
+import { render } from '@remix-run/render-middleware'
+
+let router = createRouter({ middleware: [render({ assets })] })
+```
+
+That is what makes `clientEntry(import.meta.url, function Counter(…) {…})` work: the middleware hands the module's own `file:` URL to `getHref` and takes the export name from the component's name.
+
 ### Bundled mode
 
 Same API, same `entryUrl()` — the difference is what comes out the other end:
@@ -156,7 +169,9 @@ export const sessionStore: DpopSessionStore = new DpopSessionStore()
 - `nodeConditions` — extra Node resolution conditions for `package.json` exports
 - `cacheControl` — `Cache-Control` for served modules (default `'no-cache'`)
 
-The returned server has `fetch(request)`, `entryUrl(entrypoint)`, `moduleUrls()`, `basePath`, and `reload()`.
+The returned server has `fetch(request)`, `entryUrl(entrypoint)`, `getHref(entry)`, `getPreloads(entry)`, `moduleUrls()`, `basePath`, and `reload()`.
+
+`getHref` answers the same URL as `entryUrl`, but takes an entry named any way you have it — as configured, as an absolute path, or as a `file:` URL. `getPreloads` returns that entry and every module under it, shallowest first, deduplicated; pass an array to merge several. Both are async.
 
 ### Lower-level pieces
 

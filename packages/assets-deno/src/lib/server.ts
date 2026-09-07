@@ -91,6 +91,27 @@ export interface DenoAssetServer {
    * @returns The URL path
    */
   entryUrl(entrypoint: string): string
+  /**
+   * The public URL for a client entry, named however the caller has it.
+   *
+   * Same answer as {@link DenoAssetServer.entryUrl}, but an entry may also be named by its absolute
+   * path or its `file:` URL — which is what `clientEntry(import.meta.url, …)` hands a renderer, and
+   * what makes this pair with `render({ assets })` from `@remix-run/render-middleware`.
+   *
+   * @param entry The entrypoint as configured, an absolute path, or a `file:` URL
+   * @returns The URL path
+   */
+  getHref(entry: string): Promise<string>
+  /**
+   * Every module a browser needs for an entry, shallowest first, the entry itself included.
+   *
+   * For putting in `<link rel="modulepreload">`: the browser starts fetching the whole graph at
+   * once instead of discovering each level after the last one parses.
+   *
+   * @param entry One entry, or several, named as {@link DenoAssetServer.getHref} accepts
+   * @returns Public URL paths, deduplicated, in breadth-first order
+   */
+  getPreloads(entry: string | readonly string[]): Promise<string[]>
   /** Every served module, as `resolved specifier -> public path`. Useful for debugging and tests. */
   moduleUrls(): Map<string, string>
   /** Rebuilds the graph and recompiles. Call after sources change. */
@@ -173,15 +194,30 @@ export async function createAssetServer(
     },
 
     entryUrl(entrypoint: string): string {
-      let url = state.entryUrls.get(entrypoint)
-      if (url === undefined) {
-        throw new AssetCompilationError(
-          `"${entrypoint}" is not one of this asset server's entrypoints. ` +
-            `Known entrypoints: ${[...state.entryUrls.keys()].join(', ')}.`,
-        )
+      return hrefFor(state, entrypoint, rootDir)
+    },
+
+    // Both are async because that is the shape a renderer expects of an asset server — and because
+    // a bad entry should reject rather than throw past the caller's `await`.
+    async getHref(entry: string): Promise<string> {
+      return hrefFor(state, entry, rootDir)
+    },
+
+    async getPreloads(entry: string | readonly string[]): Promise<string[]> {
+      let roots = (Array.isArray(entry) ? entry : [entry as string])
+        .map((one) => hrefFor(state, one, rootDir))
+
+      // Breadth-first, so a module is preloaded before the ones it pulls in.
+      let ordered: string[] = []
+      let queue = [...roots]
+      while (queue.length > 0) {
+        let next = queue.shift()!
+        if (ordered.includes(next)) continue
+        ordered.push(next)
+        queue.push(...(state.imports.get(next) ?? []))
       }
 
-      return url
+      return ordered
     },
 
     moduleUrls(): Map<string, string> {
@@ -192,6 +228,32 @@ export async function createAssetServer(
       state = await compile(options, rootDir, basePath)
     },
   }
+}
+
+/**
+ * The public URL of an entry, whichever way it is named.
+ *
+ * @param state The current compile
+ * @param entry An entrypoint as configured, an absolute path, or a `file:` URL
+ * @param rootDir What a relative entrypoint resolves against
+ * @returns The public URL path
+ */
+function hrefFor(state: ServerState, entry: string, rootDir: string): string {
+  let url = state.entryUrls.get(entry) ??
+    state.entryFiles.get(
+      entry.startsWith('file://')
+        ? decodeURIComponent(new URL(entry).pathname)
+        : path.resolve(rootDir, entry),
+    )
+
+  if (url === undefined) {
+    throw new AssetCompilationError(
+      `"${entry}" is not one of this asset server's entrypoints. ` +
+        `Known entrypoints: ${[...state.entryUrls.keys()].join(', ')}.`,
+    )
+  }
+
+  return url
 }
 
 function compile(
@@ -266,7 +328,23 @@ async function buildModules(
     modules.set(module.specifier, { code, etag: await etagFor(code) })
   }
 
+  // What each module imports, as public paths — the same graph the rewrite above just walked.
+  let imports = new Map<string, string[]>()
+  for (let module of graph.modules.values()) {
+    let from = registry.pathFor(module.specifier)
+    if (from === undefined) continue
+
+    let targets: string[] = []
+    for (let resolved of module.dependencies.values()) {
+      let target = registry.pathFor(resolved)
+      if (target !== undefined && !targets.includes(target)) targets.push(target)
+    }
+
+    if (targets.length > 0) imports.set(from, targets)
+  }
+
   let entryUrls = new Map<string, string>()
+  let entryFiles = new Map<string, string>()
   for (let { entrypoint, specifier } of entrySpecifiers) {
     let resolved = graph.roots.get(specifier)
     let publicPath = resolved === undefined ? undefined : registry.pathFor(resolved)
@@ -278,9 +356,10 @@ async function buildModules(
     }
 
     entryUrls.set(entrypoint, publicPath)
+    entryFiles.set(filenameOf(specifier), publicPath)
   }
 
-  return { registry, modules, entryUrls }
+  return { registry, modules, entryUrls, entryFiles, imports }
 }
 
 /** The `__filename` a wrapped CJS module sees. Informational only — nothing reads the disk. */

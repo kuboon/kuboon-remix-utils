@@ -32,6 +32,8 @@
 
 import * as path from 'node:path'
 
+import { init, parse } from 'es-module-lexer'
+
 import { PathRegistry, toJsExtension } from './paths.ts'
 import type { ServedModule, ServerState } from './state.ts'
 
@@ -162,6 +164,7 @@ export async function buildBundle(
   }
 
   let entryUrls = new Map<string, string>()
+  let entryFiles = new Map<string, string>()
   for (let { entrypoint, filePath } of entryPaths) {
     let expected = path.join(outputDir, toJsExtension(path.relative(outBase, filePath)))
     let publicPath = registry.pathFor(expected)
@@ -174,9 +177,59 @@ export async function buildBundle(
     }
 
     entryUrls.set(entrypoint, publicPath)
+    entryFiles.set(filePath, publicPath)
   }
 
-  return { registry, modules, entryUrls }
+  return {
+    registry,
+    modules,
+    entryUrls,
+    entryFiles,
+    imports: await chunkImports(modules, registry),
+  }
+}
+
+/**
+ * Which chunk imports which, read back out of the emitted code.
+ *
+ * The chunks import each other by relative path — that is what makes the output tree servable
+ * unchanged — so the graph esbuild built is recoverable from the output without asking it for one.
+ *
+ * @param modules The emitted chunks, keyed by output file path
+ * @param registry Output file path -> public path
+ * @returns Public path -> the public paths it imports directly
+ */
+async function chunkImports(
+  modules: Map<string, ServedModule>,
+  registry: PathRegistry,
+): Promise<Map<string, string[]>> {
+  await init
+
+  let imports = new Map<string, string[]>()
+
+  for (let [filePath, module] of modules) {
+    let publicPath = registry.pathFor(filePath)
+    if (publicPath === undefined || !filePath.endsWith('.js')) continue
+
+    let records
+    try {
+      ;[records] = parse(module.code)
+    } catch {
+      // A chunk that will not lex is still servable; it just contributes no preloads.
+      continue
+    }
+
+    let targets: string[] = []
+    for (let record of records) {
+      if (record.n === undefined || !record.n.startsWith('.')) continue
+      let target = registry.pathFor(path.resolve(path.dirname(filePath), record.n))
+      if (target !== undefined && !targets.includes(target)) targets.push(target)
+    }
+
+    if (targets.length > 0) imports.set(publicPath, targets)
+  }
+
+  return imports
 }
 
 function resolveEntry(entrypoint: string, rootDir: string): string {

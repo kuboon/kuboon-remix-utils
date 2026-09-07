@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "jsr:@deno/loader@0.5": "0.5.0",
+    "jsr:@kuboon/remix-assets-deno@~0.4.2": "0.4.2",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/cli@1": "1.0.32",
     "jsr:@std/encoding@1": "1.0.11",
@@ -21,6 +22,14 @@
   "jsr": {
     "@deno/loader@0.5.0": {
       "integrity": "a6d94408de5e6bacac404f8f6963c8b8cc278cfd1a878aa2f06b34a083d6bfee"
+    },
+    "@kuboon/remix-assets-deno@0.4.2": {
+      "integrity": "063b00ce77219565282a4a874ba971d52ec1b95e831f9314dcccdbca1256a99f",
+      "dependencies": [
+        "jsr:@deno/loader",
+        "npm:cjs-module-lexer",
+        "npm:es-module-lexer@^2.3.2"
+      ]
     },
     "@std/assert@1.0.19": {
       "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e"
