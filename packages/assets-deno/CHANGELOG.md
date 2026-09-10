@@ -2,6 +2,26 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.7.0
+
+- Added `getScriptEntry(entry)`, which answers with the entry's `href`, its `preloads`, and an `importMap` in one call. `@remix-run/render-middleware` 0.3.0 (the `remix@3.0.0-rc.2` set) asks an asset server for exactly that, having asked for `getHref` and `getPreloads` separately before, so `render({ assets })` no longer type-checks against a server without it.
+
+  ```diff
+  - let [href, preloads] = await Promise.all([assets.getHref(id), assets.getPreloads(id)])
+  + let { href, preloads, importMap } = await assets.getScriptEntry(id)
+  ```
+
+  The import map is always `{ imports: {} }`, and that is not a gap: every specifier is rewritten to a served URL at compile time, so nothing bare is left for a browser to resolve. `getHref` and `getPreloads` stay — a caller that wants only a URL should not have to destructure three things to get it.
+
+## 0.6.0
+
+- An entrypoint may be a glob: `entrypoints: ['islands/*.tsx']` expands at startup, sorted, and fails on a pattern that matches nothing. A file appearing in a directory is then the decision, rather than a list to keep in step with it.
+
+## 0.5.0
+
+- Added `getHref(entry)` and `getPreloads(entry)`, the pair `@remix-run/render-middleware` asked an asset server for at the time, so `render({ assets })` could take this server directly instead of through an adapter. Both accept an entry named as configured, by absolute path, or by `file:` URL — the last being what `clientEntry(import.meta.url, …)` hands a renderer.
+- `getPreloads` walks the code-split graph breadth-first, recovered by lexing the emitted chunks, so an entry's shared chunks are preloaded rather than discovered one level at a time.
+
 ## 0.4.2
 
 - Internals use `Deno.bundle`'s own types again, called directly rather than through a hand-written interface and a cast. The unstable bundler API will change; with its real types a signature change fails this package's type check, where a structural copy would have accepted a stale option name and silently dropped it.

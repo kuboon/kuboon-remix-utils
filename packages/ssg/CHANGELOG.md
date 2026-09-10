@@ -2,6 +2,13 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.9.0
+
+- Tracks the `remix@3.0.0-rc.2` package set: `@remix-run/fetch-router` 0.21 → 0.22 and `@remix-run/ui` 0.8 → 0.9. Both are additive for what this package uses — `renderToStream`, `clientEntry`, `run` — and `fetch-router` appears only in a doc comment. A minor rather than a patch for the same reason 0.7.0 was: a `^0.22.0` range excludes 0.21, so leaving it would resolve a consumer a second copy of the router.
+- `@kuboon/remix-assets-deno` `^0.4.2` → `^0.7.0`, so `createIslands` and a consumer's own asset server are one copy rather than two.
+
+  `fetch-router` 0.22 also changes what a router answers when a path matches and the method does not: a `405` with an `Allow` header, where 0.21 fell through to the `404` handler. The crawl only issues `GET`, so nothing here changes — but a site with its own method-mismatch expectations should know.
+
 ## 0.7.0
 
 - `@remix-run/ui` 0.7.0 → 0.8.0, the `remix@3.0.0-rc.1` set. `spaResponse` is new and `addEventListeners` is gone; this package used neither. `@remix-run/fetch-router` stays at `^0.21.0` — rc.1 pins the same range.

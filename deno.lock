@@ -2,7 +2,6 @@
   "version": "5",
   "specifiers": {
     "jsr:@deno/loader@0.5": "0.5.0",
-    "jsr:@kuboon/remix-assets-deno@~0.4.2": "0.4.2",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/cli@1": "1.0.32",
     "jsr:@std/encoding@1": "1.0.11",
@@ -15,8 +14,9 @@
     "npm:@remix-run/assert@0.3": "0.3.0",
     "npm:@remix-run/data-table@0.5": "0.5.0",
     "npm:@remix-run/fetch-router@0.21": "0.21.0",
+    "npm:@remix-run/fetch-router@0.22": "0.22.0",
     "npm:@remix-run/response@~0.3.8": "0.3.8",
-    "npm:@remix-run/ui@0.8": "0.8.0",
+    "npm:@remix-run/ui@0.9": "0.9.0",
     "npm:cjs-module-lexer@^2.2.1": "2.2.1",
     "npm:es-module-lexer@^2.3.0": "2.3.2",
     "npm:es-module-lexer@^2.3.2": "2.3.2"
@@ -24,14 +24,6 @@
   "jsr": {
     "@deno/loader@0.5.0": {
       "integrity": "a6d94408de5e6bacac404f8f6963c8b8cc278cfd1a878aa2f06b34a083d6bfee"
-    },
-    "@kuboon/remix-assets-deno@0.4.2": {
-      "integrity": "063b00ce77219565282a4a874ba971d52ec1b95e831f9314dcccdbca1256a99f",
-      "dependencies": [
-        "jsr:@deno/loader",
-        "npm:cjs-module-lexer",
-        "npm:es-module-lexer@^2.3.2"
-      ]
     },
     "@std/assert@1.0.19": {
       "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e"
@@ -170,6 +162,12 @@
         "@remix-run/route-pattern"
       ]
     },
+    "@remix-run/fetch-router@0.22.0": {
+      "integrity": "sha512-ErxqVZWUYTYPd6L/NbOe12BeRd8ulik7gCZnQxChEDlnko3chcTLqTsXc//h8IAqOY2x8NSOlo+ZQdFzfhCrpg==",
+      "dependencies": [
+        "@remix-run/route-pattern"
+      ]
+    },
     "@remix-run/headers@0.21.1": {
       "integrity": "sha512-DRhRveigepAQDUIi0MrOFhpcl3/KTv/fkpIhulv7Asv1pUwM8RpY2ENjdI8lfii6Z3MEsWtYhGt6If8bi6bYpQ=="
     },
@@ -190,8 +188,8 @@
     "@remix-run/route-pattern@0.24.0": {
       "integrity": "sha512-w0/lhgY40l2GrBQjJIOeYWIuKm1rxlOsc9Hvt+nyydnka0v4aI9Vv0VK4XzLD3aP08JzGtTlxFxwf1PZ8SGdLg=="
     },
-    "@remix-run/ui@0.8.0": {
-      "integrity": "sha512-4OdZ3oj0zbyVVaCFT/x2vjK5YxpD63KpLONkLZ2QVKIEBcLjJUGSenp2f08BOzC8oythLHCJgzHLKKulYJpIQA==",
+    "@remix-run/ui@0.9.0": {
+      "integrity": "sha512-M25PBhOnBmCluu+HGVGMbFxY0Ven/Tz/pESEL6CkGs1o4K8PdX6upVSHkytmsZ5V8Q+BBYL85zcGmH+mXESKrg==",
       "dependencies": [
         "@types/dom-navigation"
       ]
@@ -287,13 +285,13 @@
       },
       "packages/ssg": {
         "dependencies": [
-          "jsr:@kuboon/remix-assets-deno@~0.4.2",
+          "jsr:@kuboon/remix-assets-deno@0.7",
           "jsr:@std/cli@1",
           "jsr:@std/testing@1",
           "npm:@remix-run/assert@0.3",
-          "npm:@remix-run/fetch-router@0.21",
+          "npm:@remix-run/fetch-router@0.22",
           "npm:@remix-run/response@~0.3.8",
-          "npm:@remix-run/ui@0.8",
+          "npm:@remix-run/ui@0.9",
           "npm:es-module-lexer@^2.3.0"
         ]
       }
