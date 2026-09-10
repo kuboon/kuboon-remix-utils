@@ -1,5 +1,5 @@
 export { AssetCompilationError, createAssetServer } from './lib/server.ts'
-export type { AssetServerOptions, DenoAssetServer } from './lib/server.ts'
+export type { AssetServerOptions, DenoAssetServer, ScriptEntry } from './lib/server.ts'
 export { buildBundle, BundleError } from './lib/bundle.ts'
 export type { BundleMessage, BundleModeOptions } from './lib/bundle.ts'
 export type { ServedModule, ServerState } from './lib/state.ts'

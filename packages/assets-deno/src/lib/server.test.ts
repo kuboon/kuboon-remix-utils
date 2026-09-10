@@ -283,4 +283,30 @@ describe('createAssetServer entry lookups', () => {
     )
     assert.ok(preloads.includes(server.entryUrl('entry_b.ts')), 'both entries are listed')
   })
+
+  it('answers getScriptEntry with the same href and preloads as the two calls it replaces', async () => {
+    let server = await createFixtureServer()
+
+    let entry = await server.getScriptEntry('entry_a.ts')
+
+    assert.equal(entry.href, await server.getHref('entry_a.ts'))
+    assert.deepEqual(entry.preloads, await server.getPreloads('entry_a.ts'))
+  })
+
+  it('answers getScriptEntry with an empty import map, every specifier being rewritten', async () => {
+    let server = await createFixtureServer()
+
+    let entry = await server.getScriptEntry('entry_a.ts')
+
+    assert.deepEqual(entry.importMap, { imports: {} })
+  })
+
+  it('refuses getScriptEntry for something that is not an entrypoint', async () => {
+    let server = await createFixtureServer()
+
+    await assert.rejects(
+      () => server.getScriptEntry(`${fixtureDir}shared.ts`),
+      /not one of this asset server's entrypoints/,
+    )
+  })
 })

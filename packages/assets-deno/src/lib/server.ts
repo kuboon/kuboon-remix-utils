@@ -78,6 +78,27 @@ export interface AssetServerOptions {
   bundle?: BundleModeOptions
 }
 
+/**
+ * What a renderer needs to load one client entry.
+ *
+ * Structurally what `@remix-run/assets` calls a `ScriptEntry`, so an asset server from here can be
+ * handed straight to `render({ assets })` without an adapter between them.
+ */
+export interface ScriptEntry {
+  /** Public URL of the entry module, for a `<script type="module" src>`. */
+  href: string
+  /** The graph behind it, for `<link rel="modulepreload">`. See {@link DenoAssetServer.getPreloads}. */
+  preloads: string[]
+  /**
+   * The import map the browser needs to resolve the entry's imports.
+   *
+   * Always empty here, and that is not a gap: every specifier is rewritten to a served URL at
+   * compile time, so nothing bare is left for a browser to resolve. The field exists because a
+   * renderer asks for it, and an empty map is the honest answer rather than a missing one.
+   */
+  importMap: { imports: Record<string, string>; scopes?: Record<string, Record<string, string>> }
+}
+
 /** A compiled asset server. */
 export interface DenoAssetServer {
   /** Public mount point, without a trailing slash. */
@@ -117,6 +138,18 @@ export interface DenoAssetServer {
    * @returns Public URL paths, deduplicated, in breadth-first order
    */
   getPreloads(entry: string | readonly string[]): Promise<string[]>
+  /**
+   * Everything a renderer needs to load one client entry: the URL, the graph behind it, and the
+   * import map to resolve it with.
+   *
+   * This is what `render({ assets })` from `@remix-run/render-middleware` asks for — one call
+   * rather than the `getHref` and `getPreloads` pair it used before. The two remain, because a
+   * caller that wants only a URL should not have to destructure three things to get it.
+   *
+   * @param entry The entry, named as {@link DenoAssetServer.getHref} accepts
+   * @returns The entry's URL, its preloads, and its import map
+   */
+  getScriptEntry(entry: string): Promise<ScriptEntry>
   /** Every served module, as `resolved specifier -> public path`. Useful for debugging and tests. */
   moduleUrls(): Map<string, string>
   /** Rebuilds the graph and recompiles. Call after sources change. */
@@ -209,20 +242,15 @@ export async function createAssetServer(
     },
 
     async getPreloads(entry: string | readonly string[]): Promise<string[]> {
-      let roots = (Array.isArray(entry) ? entry : [entry as string])
-        .map((one) => hrefFor(state, one, rootDir))
+      return preloadsFor(state, entry, rootDir)
+    },
 
-      // Breadth-first, so a module is preloaded before the ones it pulls in.
-      let ordered: string[] = []
-      let queue = [...roots]
-      while (queue.length > 0) {
-        let next = queue.shift()!
-        if (ordered.includes(next)) continue
-        ordered.push(next)
-        queue.push(...(state.imports.get(next) ?? []))
+    async getScriptEntry(entry: string): Promise<ScriptEntry> {
+      return {
+        href: hrefFor(state, entry, rootDir),
+        preloads: preloadsFor(state, entry, rootDir),
+        importMap: { imports: {} },
       }
-
-      return ordered
     },
 
     moduleUrls(): Map<string, string> {
@@ -233,6 +261,36 @@ export async function createAssetServer(
       state = await compile(options, rootDir, basePath)
     },
   }
+}
+
+/**
+ * Every module a browser needs for one or more entries, shallowest first.
+ *
+ * Breadth-first, so a module is preloaded before the ones it pulls in — which is the order a
+ * browser would have discovered them in, minus the waiting.
+ *
+ * @param state The current compile
+ * @param entry One entry, or several, named as {@link hrefFor} accepts
+ * @param rootDir What a relative entrypoint resolves against
+ * @returns Public URL paths, deduplicated, in breadth-first order
+ */
+function preloadsFor(
+  state: ServerState,
+  entry: string | readonly string[],
+  rootDir: string,
+): string[] {
+  let ordered: string[] = []
+  let queue = (Array.isArray(entry) ? entry : [entry as string])
+    .map((one) => hrefFor(state, one, rootDir))
+
+  while (queue.length > 0) {
+    let next = queue.shift()!
+    if (ordered.includes(next)) continue
+    ordered.push(next)
+    queue.push(...(state.imports.get(next) ?? []))
+  }
+
+  return ordered
 }
 
 /**
