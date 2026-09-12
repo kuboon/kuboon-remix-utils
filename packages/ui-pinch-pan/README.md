@@ -6,7 +6,7 @@ Two-finger pinch and pan as a [`@remix-run/ui`](https://www.npmjs.com/package/@r
 deno add jsr:@kuboon/remix-ui-pinch-pan
 ```
 
-```tsx
+```tsx ignore
 import { pinchPan } from '@kuboon/remix-ui-pinch-pan'
 <div class='viewport' mix={[pinchPan({ maxScale: 6 })]}>
   <img src='/map.png' alt='' />
@@ -54,7 +54,7 @@ All optional.
 `controls` is how the rest of the component drives the view — a reset button, a zoom control, a
 "fit" action:
 
-```tsx
+```tsx ignore
 let view: PinchPanControls | null = null
 <div mix={[pinchPan({ maxScale: 8, controls: (api) => (view = api) })]}>
   <img src='/map.png' alt='' />
@@ -71,7 +71,7 @@ The gesture arithmetic is exported separately from the DOM wiring, so a componen
 its own painting — a canvas, a WebGL view, a transform it keeps in component state — can take the
 part that decides where the content lands and none of the rest:
 
-```ts
+```ts ignore
 import { advanceGesture, anchorGesture } from '@kuboon/remix-ui-pinch-pan'
 
 let anchor = anchorGesture(pointers, transform)

@@ -97,7 +97,7 @@ const DEFAULT_POINTER_TYPES: readonly string[] = ['touch', 'pen']
  * no other use for them.
  *
  * @example
- * ```tsx
+ * ```tsx ignore
  * <div class="viewport" mix={[pinchPan({ maxScale: 6 })]}>
  *   <img src="/map.png" alt="" />
  * </div>

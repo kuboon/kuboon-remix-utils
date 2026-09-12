@@ -1,15 +1,15 @@
 {
   "name": "@kuboon/remix-ui-pinch-pan",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
-  "exports": "./src/index.ts",
+  "exports": "./src/mod.ts",
   "imports": {
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
     "@remix-run/ui": "npm:@remix-run/ui@^0.9.0",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd"
   },
   "tasks": {
-    "test": "deno test",
+    "test": "deno test --doc",
     "check": "deno check src"
   },
   "publish": {

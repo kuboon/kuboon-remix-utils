@@ -146,6 +146,22 @@ describe('advanceGesture', () => {
     samePoint(contentUnder(next, centroidOf(pinched)), pinned, 1e-9)
   })
 
+  it('matches the worked example in the module doc', () => {
+    // `mod.ts` opens with these numbers, and a front-page example is the one
+    // readers copy. `deno test --doc` compiles and runs that snippet; this
+    // pins the values its comments claim.
+    let anchor = anchorGesture(twoFingers([100, 150], [200, 150]), IDENTITY_TRANSFORM)
+
+    let next = advanceGesture(anchor, twoFingers([50, 150], [250, 150]), {
+      minScale: 1,
+      maxScale: 8,
+    })
+
+    closeTo(next.scale, 2)
+    closeTo(next.x, -150)
+    closeTo(next.y, -150)
+  })
+
   it('pans without zooming when the anchor has a single pointer', () => {
     let anchor = anchorGesture([{ id: 1, x: 10, y: 10 }], IDENTITY_TRANSFORM)
 
