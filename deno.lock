@@ -294,6 +294,13 @@
           "npm:@remix-run/ui@0.9",
           "npm:es-module-lexer@^2.3.0"
         ]
+      },
+      "packages/ui-pinch-pan": {
+        "dependencies": [
+          "jsr:@std/testing@1",
+          "npm:@remix-run/assert@0.3",
+          "npm:@remix-run/ui@0.9"
+        ]
       }
     }
   }
