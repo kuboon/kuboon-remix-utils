@@ -40,16 +40,16 @@ for them.
 
 All optional.
 
-| Option                           | Default                            |                                                                                                              |
-| -------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `content`                        | first element child, else the host | Selector or `(host) => Element` for the element that receives the transform                                  |
-| `minScale` / `maxScale`          | `0` / `Infinity`                   | Scale bounds                                                                                                 |
-| `initial`                        | identity                           | Where the view starts, and where `reset()` returns to                                                        |
-| `apply`                          | `true`                             | Write `style.transform` on the content. Turn off to paint it yourself from `onChange`                        |
-| `touchAction`                    | `true`                             | Set `touch-action: none` on the host. Without it the browser claims the gesture and no `pointermove` arrives |
-| `pointerTypes`                   | `['touch', 'pen']`                 | Pointer types that take part                                                                                 |
-| `onStart` / `onChange` / `onEnd` | —                                  | `(transform) => void`                                                                                        |
-| `controls`                       | —                                  | `(controls, signal) => void`, called once the host is inserted                                               |
+| Option                           | Default                            |                                                                                                                                                          |
+| -------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                        | first element child, else the host | Selector or `(host) => Element` for the element that receives the transform                                                                              |
+| `minScale` / `maxScale`          | `0` / `Infinity`                   | Scale bounds                                                                                                                                             |
+| `initial`                        | identity                           | Where the view starts, and where `reset()` returns to                                                                                                    |
+| `apply`                          | `true`                             | Write `style.transform` on the content. Turn off to paint it yourself from `onChange`                                                                    |
+| `touchAction`                    | `true`                             | What to set `touch-action` to on the host; `true` means `none`. A CSS value (`'pan-x pan-y'`) keeps a scroll container's scrolling; `false` sets nothing |
+| `pointerTypes`                   | `['touch', 'pen']`                 | Pointer types that take part                                                                                                                             |
+| `onStart` / `onChange` / `onEnd` | —                                  | `(transform) => void`                                                                                                                                    |
+| `controls`                       | —                                  | `(controls, signal) => void`, called once the host is inserted                                                                                           |
 
 `controls` is how the rest of the component drives the view — a reset button, a zoom control, a
 "fit" action:
@@ -65,11 +65,51 @@ let view: PinchPanControls | null = null
 `signal` is aborted when the host leaves the document, so anything you hang off `controls` can be
 torn down with it.
 
-## Driving the view yourself
+## Painting the view yourself
+
+A CSS transform is not the only way to show a zoom. Set `apply: false` and the mixin stops writing
+`style.transform`, but keeps everything else it does — pointer capture, re-anchoring when a finger
+joins or leaves, converting client coordinates into the content's space — and hands you each
+transform through `onChange`:
+
+```ts ignore
+pinchPan({ maxScale: 8, apply: false, onChange: (next) => redraw(next) })
+```
+
+That is the rung to take when the view is a canvas, a WebGL scene, or a board whose own width and
+height carry the zoom. Only drop to the arithmetic below it when you own the pointer handling too.
+
+## Using it with a scroll container
+
+A board that resizes itself rather than transforming usually pans by **native scrolling** — which is
+also what the mouse wheel and a trackpad are doing. `touch-action: none` would take one-finger
+scrolling away from it, so pass the value that keeps it instead:
+
+```ts ignore
+pinchPan({
+  maxScale: 8,
+  apply: false,
+  touchAction: 'pan-x pan-y',
+  onChange: (next) => resize(next),
+})
+```
+
+`pan-x pan-y` lets the browser pan but excludes its own pinch-zoom, so the two-finger gesture arrives
+here uninterrupted. Verified in Chromium against a `overflow: auto` container with an oversized SVG:
+
+|                     | one finger                     | wheel   | two fingers                               |
+| ------------------- | ------------------------------ | ------- | ----------------------------------------- |
+| native scrolling    | scrolls                        | scrolls | —                                         |
+| what the mixin sees | `pointercancel`, no `onChange` | nothing | `onStart`, `onChange`, `onEnd`, no cancel |
+
+Leaving `touch-action` alone (`touchAction: false`) mostly works too, but the browser may claim the
+two-finger gesture part-way and cancel the pointers mid-pinch; `pan-x pan-y` is the setting that
+stops it trying.
+
+## Taking only the arithmetic
 
 The gesture arithmetic is exported separately from the DOM wiring, so a component that already owns
-its own painting — a canvas, a WebGL view, a transform it keeps in component state — can take the
-part that decides where the content lands and none of the rest:
+its own event handling can take the part that decides where the content lands and none of the rest:
 
 ```ts ignore
 import { advanceGesture, anchorGesture } from '@kuboon/remix-ui-pinch-pan'
@@ -80,7 +120,8 @@ transform = advanceGesture(anchor, pointers, { minScale: 1, maxScale: 8 })
 ```
 
 Points are in the content's own coordinate space: its untransformed box, origin at the top-left. The
-mixin converts from client coordinates by measuring that corner once per gesture.
+mixin converts from client coordinates by measuring that corner once per gesture; doing it yourself
+means measuring it yourself, and re-anchoring yourself when the set of fingers changes.
 
 ## Testing a touch gesture
 

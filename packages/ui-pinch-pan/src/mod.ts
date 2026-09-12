@@ -67,10 +67,41 @@
  *
  * ## Painting the view yourself
  *
+ * A CSS transform is not the only way to show a zoom. {@link PinchPanOptions.apply} `: false` stops
+ * the mixin writing `style.transform` while it keeps everything else it does — pointer capture,
+ * re-anchoring when a finger joins or leaves, converting client coordinates into the content's
+ * space — and hands you each transform through {@link PinchPanOptions.onChange}:
+ *
+ * ```ts ignore
+ * pinchPan({ maxScale: 8, apply: false, onChange: (next) => redraw(next) })
+ * ```
+ *
+ * That is the rung to take when the view is a canvas, a WebGL scene, or a board whose own width and
+ * height carry the zoom.
+ *
+ * ## Using it with a scroll container
+ *
+ * A board that resizes itself rather than transforming usually pans by **native scrolling** — which
+ * is also what the mouse wheel and a trackpad are doing. `touch-action: none` would take one-finger
+ * scrolling away from it, so pass the value that keeps it instead:
+ *
+ * ```ts ignore
+ * pinchPan({
+ *   maxScale: 8,
+ *   apply: false,
+ *   touchAction: 'pan-x pan-y',
+ *   onChange: (next) => resize(next),
+ * })
+ * ```
+ *
+ * `pan-x pan-y` lets the browser pan but excludes its own pinch-zoom, so one finger and the wheel
+ * scroll the container while the two-finger gesture arrives here uninterrupted.
+ *
+ * ## Taking only the arithmetic
+ *
  * The gesture arithmetic is exported separately from the DOM wiring, so a component that already
- * owns its painting — a canvas, a WebGL view, a transform it keeps in state — can take the part
- * that decides where the content lands and none of the rest. It is also why the arithmetic is
- * testable without a DOM.
+ * owns its event handling too can take the part that decides where the content lands and none of
+ * the rest. It is also why the arithmetic is testable without a DOM.
  *
  * ```ts
  * import {
@@ -93,7 +124,8 @@
  * ```
  *
  * Points are in the content's own coordinate space: its untransformed box, origin at the top-left.
- * The mixin converts from client coordinates by measuring that corner once per gesture.
+ * The mixin converts from client coordinates by measuring that corner once per gesture; doing it
+ * yourself means measuring it yourself, and re-anchoring yourself when the set of fingers changes.
  *
  * @module
  */

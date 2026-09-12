@@ -54,12 +54,17 @@ export interface PinchPanOptions extends ScaleLimits {
    */
   readonly apply?: boolean
   /**
-   * Set `touch-action: none` on the host. Default `true`.
+   * What to set `touch-action` to on the host. `true` (the default) means `none`.
    *
-   * Without it the browser claims the gesture first and scrolls or zooms the page instead, and no
-   * `pointermove` arrives. Turn it off only if you set an equivalent rule in CSS yourself.
+   * Some value is needed: left alone, the browser claims the gesture first and scrolls or zooms the
+   * page instead, and no `pointermove` arrives. `none` is right when the host owns every gesture.
+   *
+   * Pass a CSS value instead when the host is a **scroll container** and you want to keep its
+   * scrolling: `'pan-x pan-y'` lets the browser pan with one finger and with the wheel, while still
+   * excluding its own pinch-zoom, so a two-finger gesture reaches this mixin uninterrupted. `false`
+   * sets nothing, for when your own CSS already says it.
    */
-  readonly touchAction?: boolean
+  readonly touchAction?: boolean | string
   /** Pointer types that take part. Default `['touch', 'pen']`. */
   readonly pointerTypes?: readonly string[]
   /** Called when a gesture starts. */
@@ -239,8 +244,12 @@ export const pinchPan: MixinFactory<Element, [options?: PinchPanOptions], Elemen
       controller = new AbortController()
       let signal = controller.signal
 
-      if (options.touchAction !== false) {
-        ;(host as HTMLElement).style?.setProperty('touch-action', 'none')
+      const touchAction = options.touchAction ?? true
+      if (touchAction !== false) {
+        ;(host as HTMLElement).style?.setProperty(
+          'touch-action',
+          touchAction === true ? 'none' : touchAction,
+        )
       }
 
       transform = initialTransform()

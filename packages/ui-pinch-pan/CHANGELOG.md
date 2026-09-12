@@ -1,5 +1,17 @@
 # @kuboon/remix-ui-pinch-pan
 
+## 0.2.0
+
+- `touchAction` takes a CSS value, not just a boolean. The first real use of this package was a board that shows its zoom by resizing an SVG and pans by the scroll container's own scrolling — which is what the mouse wheel and a trackpad are doing. `touch-action: none` takes one-finger scrolling away from a design like that, so there is now a way to keep it:
+
+  ```ts
+  pinchPan({ apply: false, touchAction: 'pan-x pan-y', onChange: (next) => resize(next) })
+  ```
+
+  `pan-x pan-y` lets the browser pan but excludes its own pinch-zoom, so the two-finger gesture arrives uninterrupted. Verified in Chromium against an `overflow: auto` container with an oversized SVG: one finger and the wheel scroll natively (the mixin sees a `pointercancel` and no `onChange`), and the pinch runs `onStart` → `onChange` → `onEnd` with no cancel and no scroll movement. Leaving `touch-action` alone works mostly, but the browser can claim the two-finger gesture part-way and cancel the pointers mid-pinch.
+
+- The docs took that use case seriously. `apply: false` — keep the mixin's pointer handling, paint the view yourself — was one line in the options table, so the same report reached for `anchorGesture` / `advanceGesture` and rebuilt the pointer bookkeeping that was already here. "Painting the view yourself", "Using it with a scroll container" and "Taking only the arithmetic" are now three separate rungs, in that order, in both the README and the module doc.
+
 ## 0.1.1
 
 - The entry point is `src/mod.ts` rather than `src/index.ts`, which is the Deno convention. Nothing changes for a consumer — the package's `exports` maps `.` either way — but JSR shows the file, and the file should read as Deno rather than as npm.
