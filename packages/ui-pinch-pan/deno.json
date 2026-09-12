@@ -1,0 +1,34 @@
+{
+  "name": "@kuboon/remix-ui-pinch-pan",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "imports": {
+    "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
+    "@remix-run/ui": "npm:@remix-run/ui@^0.9.0",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd"
+  },
+  "tasks": {
+    "test": "deno test",
+    "check": "deno check src"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "README.md",
+      "LICENSE",
+      "deno.json"
+    ],
+    "exclude": [
+      "**/*.test.ts"
+    ]
+  },
+  "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ]
+  }
+}
