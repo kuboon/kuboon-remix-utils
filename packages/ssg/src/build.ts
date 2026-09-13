@@ -1,5 +1,5 @@
 /**
- * `deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts`
+ * `deno run -c deno.json -P=build jsr:@remix-kbn/ssg/build.ts`
  *
  * Builds the site in the current directory into `dist/`, by crawling its `router.ts` — the same
  * module `deno serve router.ts` runs as the dev server.
@@ -21,9 +21,9 @@ if (import.meta.main) {
   })
 
   if (args.help) {
-    console.log(`Build a @kuboon/remix-ssg site into static files.
+    console.log(`Build a @remix-kbn/ssg site into static files.
 
-  deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts [options]
+  deno run -c deno.json -P=build jsr:@remix-kbn/ssg/build.ts [options]
 
 Options:
   --out <dir>    Output directory (default: dist)

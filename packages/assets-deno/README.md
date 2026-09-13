@@ -1,8 +1,7 @@
 # remix-assets-deno
 
-> **This package has moved to [`@remix-kbn/assets-deno`](https://jsr.io/@remix-kbn/assets-deno).** The `remix-` prefix goes with the
-> move, because the scope now says it. `0.7.1` is the last release under `@kuboon/remix-assets-deno` and carries only
-> this notice; nothing breaks if you stay, since JSR cannot unpublish.
+> Renamed from `@kuboon/remix-assets-deno` at 0.8.0. The old name stops at 0.7.1 and stays on
+> JSR; nothing was unpublished.
 
 On-demand asset server for [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router), built on Deno's own resolver and loader — so **JSR imports work**.
 
@@ -40,14 +39,14 @@ Use `'modules'` when you want per-module URLs in devtools and no bundler in the 
 ## Installation
 
 ```sh
-deno add jsr:@kuboon/remix-assets-deno
+deno add jsr:@remix-kbn/assets-deno
 ```
 
 ## Usage
 
 ```ts
 import { createRouter } from '@remix-run/fetch-router'
-import { createAssetServer } from '@kuboon/remix-assets-deno'
+import { createAssetServer } from '@remix-kbn/assets-deno'
 
 let assets = await createAssetServer({
   rootDir: new URL('..', import.meta.url).pathname,

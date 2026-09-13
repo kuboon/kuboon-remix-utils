@@ -2,6 +2,19 @@
 
 This is the changelog for [`remix-mcp`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/mcp). It follows [semantic versioning](https://semver.org/).
 
+## 0.2.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/mcp`** from 0.2.0 on. The `remix-` prefix went with the move, because the scope says it now.
+
+  ```diff
+  - "@kuboon/remix-mcp": "jsr:@kuboon/remix-mcp@^0.1.2"
+  + "@remix-kbn/mcp": "jsr:@remix-kbn/mcp@^0.2.0"
+  ```
+
+  No code changed. The minor bump is so that no version number exists under both names — 0.2.0 is only ever the new one.
+
+  `@kuboon/remix-mcp` stops at 0.1.2, whose only content was the notice that this was coming. JSR cannot unpublish, so every version under the old name keeps resolving exactly as it did; entries below 0.1.2 describe releases made there.
+
 ## 0.1.2
 
 - Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/mcp`**, with the `remix-` prefix dropped because the scope now says it.

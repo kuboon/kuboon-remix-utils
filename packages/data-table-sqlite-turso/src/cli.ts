@@ -8,7 +8,7 @@
  * @example
  * ```jsonc
  * // deno.json
- * { "tasks": { "db": "deno run -A jsr:@kuboon/remix-data-table-sqlite-turso/cli" } }
+ * { "tasks": { "db": "deno run -A jsr:@remix-kbn/data-table-sqlite-turso/cli" } }
  * ```
  *
  * ```sh

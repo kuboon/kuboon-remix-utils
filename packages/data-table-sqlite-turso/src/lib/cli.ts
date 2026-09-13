@@ -211,7 +211,7 @@ export function parseTursoDbArgs(argv: string[]): TursoDbInvocation {
 /**
  * Runs a database command against a Turso / libSQL database.
  *
- * This is the whole of `deno run -A jsr:@kuboon/remix-data-table-sqlite-turso/cli`: connect from
+ * This is the whole of `deno run -A jsr:@remix-kbn/data-table-sqlite-turso/cli`: connect from
  * the environment, load `YYYYMMDDHHmmss_name/{up,down}.sql` migration directories, and hand the
  * command to `runRemixDb()` — the same function `remix db` calls — so output and the
  * `data_table_migrations` journal match the Remix CLI exactly. `rollback` is the one addition:
@@ -226,7 +226,7 @@ export function parseTursoDbArgs(argv: string[]): TursoDbInvocation {
  * @example
  * ```ts
  * // db/cli.ts — deno task db migrate
- * import { runTursoDbCli } from '@kuboon/remix-data-table-sqlite-turso'
+ * import { runTursoDbCli } from '@remix-kbn/data-table-sqlite-turso'
  *
  * Deno.exit(await runTursoDbCli(Deno.args))
  * ```

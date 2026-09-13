@@ -1,9 +1,9 @@
 {
-  "name": "@kuboon/remix-data-table-sqlite-turso",
-  "version": "0.3.2",
+  "name": "@remix-kbn/data-table-sqlite-turso",
+  "version": "0.4.0",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/mod.ts",
     "./cli": "./src/cli.ts"
   },
   "imports": {

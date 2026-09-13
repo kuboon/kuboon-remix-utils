@@ -2,6 +2,19 @@
 
 This is the changelog for [`data-table-sqlite-turso`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/data-table-sqlite-turso). It follows [semantic versioning](https://semver.org/).
 
+## 0.4.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/data-table-sqlite-turso`** from 0.4.0 on. The `remix-` prefix went with the move, because the scope says it now.
+
+  ```diff
+  - "@kuboon/remix-data-table-sqlite-turso": "jsr:@kuboon/remix-data-table-sqlite-turso@^0.3.2"
+  + "@remix-kbn/data-table-sqlite-turso": "jsr:@remix-kbn/data-table-sqlite-turso@^0.4.0"
+  ```
+
+  No code changed. The minor bump is so that no version number exists under both names — 0.4.0 is only ever the new one.
+
+  `@kuboon/remix-data-table-sqlite-turso` stops at 0.3.2, whose only content was the notice that this was coming. JSR cannot unpublish, so every version under the old name keeps resolving exactly as it did; entries below 0.3.2 describe releases made there.
+
 ## 0.3.2
 
 - Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/data-table-sqlite-turso`**, with the `remix-` prefix dropped because the scope now says it.

@@ -1,6 +1,6 @@
 {
-  "name": "@kuboon/remix-assets-deno",
-  "version": "0.7.1",
+  "name": "@remix-kbn/assets-deno",
+  "version": "0.8.0",
   "license": "MIT",
   "compilerOptions": {
     "lib": [
@@ -10,7 +10,7 @@
       "esnext"
     ]
   },
-  "exports": "./src/index.ts",
+  "exports": "./src/mod.ts",
   "imports": {
     "@deno/loader": "jsr:@deno/loader@^0.5.0",
     "@remix-run/assert": "npm:@remix-run/assert@^0.3.0",
