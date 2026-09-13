@@ -1,5 +1,9 @@
 # remix-assets-deno
 
+> **This package has moved to [`@remix-kbn/assets-deno`](https://jsr.io/@remix-kbn/assets-deno).** The `remix-` prefix goes with the
+> move, because the scope now says it. `0.7.1` is the last release under `@kuboon/remix-assets-deno` and carries only
+> this notice; nothing breaks if you stay, since JSR cannot unpublish.
+
 On-demand asset server for [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router), built on Deno's own resolver and loader — so **JSR imports work**.
 
 This is the JSR-capable counterpart of [`@remix-run/assets`](https://github.com/remix-run/remix/tree/main/packages/assets). That package resolves imports with `oxc-resolver`, which only understands `node_modules`, so a `jsr:` specifier never resolves — and `nodeModulesDir: "auto"` does not help, because Deno keeps JSR packages in its global cache and materializes only npm packages into `node_modules`. Here resolution, loading, and TypeScript/JSX transpilation all come from [`@deno/loader`](https://jsr.io/@deno/loader), the same machinery the Deno CLI uses, so JSR, npm, `deno.json` import maps, and workspace members resolve exactly the way the running Deno process resolves them.

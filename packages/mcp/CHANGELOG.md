@@ -2,6 +2,17 @@
 
 This is the changelog for [`remix-mcp`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/mcp). It follows [semantic versioning](https://semver.org/).
 
+## 0.1.2
+
+- Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/mcp`**, with the `remix-` prefix dropped because the scope now says it.
+
+  ```diff
+  - "@kuboon/remix-mcp": "jsr:@kuboon/remix-mcp@^0.1.1"
+  + "@remix-kbn/mcp": "jsr:@remix-kbn/mcp"
+  ```
+
+  0.1.2 is the announcement and nothing more — its code is 0.1.1's, byte for byte. Nothing breaks if you stay: JSR cannot unpublish, so every version under this name keeps resolving exactly as it does today, and there is no deadline attached to moving.
+
 ## 0.1.1
 
 - Bumped `@remix-run/fetch-router` to `^0.21.0` (Remix v3 `beta.6`). No API change here: `0.21.0`'s only breaking change is `Route.href()` taking an options object, which this package does not call.

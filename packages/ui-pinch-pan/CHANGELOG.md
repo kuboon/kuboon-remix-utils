@@ -1,5 +1,16 @@
 # @kuboon/remix-ui-pinch-pan
 
+## 0.1.1
+
+- Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/ui-pinch-pan`**, with the `remix-` prefix dropped because the scope now says it.
+
+  ```diff
+  - "@kuboon/remix-ui-pinch-pan": "jsr:@kuboon/remix-ui-pinch-pan@^0.1.0"
+  + "@remix-kbn/ui-pinch-pan": "jsr:@remix-kbn/ui-pinch-pan"
+  ```
+
+  0.1.1 is the announcement and nothing more — its code is 0.1.0's, byte for byte. Nothing breaks if you stay: JSR cannot unpublish, so every version under this name keeps resolving exactly as it does today, and there is no deadline attached to moving.
+
 ## 0.1.0
 
 Initial release.
