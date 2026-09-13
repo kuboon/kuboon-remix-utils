@@ -1,9 +1,5 @@
 # @kuboon/remix-ui-pinch-pan
 
-> **This package has moved to [`@remix-kbn/ui-pinch-pan`](https://jsr.io/@remix-kbn/ui-pinch-pan).** The `remix-` prefix goes with the
-> move, because the scope now says it. `0.1.1` is the last release under `@kuboon/remix-ui-pinch-pan` and carries only
-> this notice; nothing breaks if you stay, since JSR cannot unpublish.
-
 Two-finger pinch and pan as a [`@remix-run/ui`](https://www.npmjs.com/package/@remix-run/ui) mixin.
 
 ```sh
