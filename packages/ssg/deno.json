@@ -3,7 +3,7 @@
   "version": "0.10.0",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/mod.ts",
     "./node": "./src/node.ts",
     "./site": "./src/site.ts",
     "./client": "./src/client.ts",
