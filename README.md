@@ -12,7 +12,12 @@ This is a [Deno workspace](https://docs.deno.com/runtime/fundamentals/workspaces
 | [`data-table-sqlite-turso`](./packages/data-table-sqlite-turso) | [`@kuboon/remix-data-table-sqlite-turso`](https://jsr.io/@kuboon/remix-data-table-sqlite-turso) | Async Turso / libSQL database for `@remix-run/data-table`, with a migration CLI replacing `remix db` |
 | [`mcp`](./packages/mcp)                                         | [`@kuboon/remix-mcp`](https://jsr.io/@kuboon/remix-mcp)                                         | Serve an MCP server from a `remix/fetch-router` route                                                |
 | [`ssg`](./packages/ssg)                                         | [`@kuboon/remix-ssg`](https://jsr.io/@kuboon/remix-ssg)                                         | Static site generation (prerender) for `remix/fetch-router`                                          |
-| [`ui-pinch-pan`](./packages/ui-pinch-pan)                       | [`@kuboon/remix-ui-pinch-pan`](https://jsr.io/@kuboon/remix-ui-pinch-pan)                       | Two-finger pinch and pan as a `@remix-run/ui` mixin                                                  |
+| [`ui-pinch-pan`](./packages/ui-pinch-pan)                       | not published — see below                                                                       | Two-finger pinch and pan as a `@remix-run/ui` mixin                                                  |
+
+`ui-pinch-pan` has no published package right now. `@kuboon/remix-ui-pinch-pan` is archived on JSR
+with its only version yanked, so it is out of the release workflow; it comes back when the packages
+move to the `@remix-kbn` scope, as `@remix-kbn/ui-pinch-pan`. The source here is what will be
+published.
 
 ## Claude Code plugins
 
