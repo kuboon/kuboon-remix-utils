@@ -1,6 +1,6 @@
 {
-  "name": "@kuboon/remix-assets-deno",
-  "version": "0.7.0",
+  "name": "@remix-kbn/assets-deno",
+  "version": "0.8.0",
   "license": "MIT",
   "compilerOptions": {
     "lib": [

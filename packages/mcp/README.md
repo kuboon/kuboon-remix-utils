@@ -23,16 +23,16 @@ Host/Origin checks the MCP spec asks local servers to perform.
 
 ## Installation
 
-This package is published to [JSR](https://jsr.io/@kuboon/remix-mcp):
+This package is published to [JSR](https://jsr.io/@remix-kbn/mcp):
 
 ```sh
-deno add jsr:@kuboon/remix-mcp npm:@modelcontextprotocol/server npm:@remix-run/fetch-router
+deno add jsr:@remix-kbn/mcp npm:@modelcontextprotocol/server npm:@remix-run/fetch-router
 ```
 
 For Node:
 
 ```sh
-npx jsr add @kuboon/remix-mcp
+npx jsr add @remix-kbn/mcp
 npm install @modelcontextprotocol/server @remix-run/fetch-router
 ```
 
@@ -41,7 +41,7 @@ npm install @modelcontextprotocol/server @remix-run/fetch-router
 ```ts
 import { McpServer } from '@modelcontextprotocol/server'
 import { createRouter } from '@remix-run/fetch-router'
-import { mcp } from '@kuboon/remix-mcp'
+import { mcp } from '@remix-kbn/mcp'
 import * as z from 'zod'
 
 let server = new McpServer({ name: 'my-server', version: '1.0.0' })

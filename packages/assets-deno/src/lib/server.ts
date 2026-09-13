@@ -177,7 +177,7 @@ export class AssetCompilationError extends Error {
  * @example
  * ```ts
  * import { createRouter } from '@remix-run/fetch-router'
- * import { createAssetServer } from '@kuboon/remix-assets-deno'
+ * import { createAssetServer } from '@remix-kbn/assets-deno'
  *
  * let assets = await createAssetServer({
  *   rootDir: new URL('.', import.meta.url).pathname,

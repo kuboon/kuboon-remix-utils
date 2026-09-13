@@ -36,14 +36,14 @@ Use `'modules'` when you want per-module URLs in devtools and no bundler in the 
 ## Installation
 
 ```sh
-deno add jsr:@kuboon/remix-assets-deno
+deno add jsr:@remix-kbn/assets-deno
 ```
 
 ## Usage
 
 ```ts
 import { createRouter } from '@remix-run/fetch-router'
-import { createAssetServer } from '@kuboon/remix-assets-deno'
+import { createAssetServer } from '@remix-kbn/assets-deno'
 
 let assets = await createAssetServer({
   rootDir: new URL('..', import.meta.url).pathname,

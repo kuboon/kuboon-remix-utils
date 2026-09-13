@@ -99,7 +99,7 @@ export interface CrawlOptions {
    *
    * Defaults to `<pathname>/index.html` for HTML and the pathname itself for everything else. A
    * static host decides this — `about.html` and `about/index.html` are not interchangeable — so a
-   * build for a particular host passes its rule here. See `@kuboon/remix-ssg/site`'s `githubPages`.
+   * build for a particular host passes its rule here. See `@remix-kbn/ssg/site`'s `githubPages`.
    *
    * @param pathname The request path that produced the response
    * @param response The response, for deciding by content type

@@ -22,24 +22,24 @@ Requires `@remix-run/data-table@^0.4.0` (Remix v3 `beta.6` or later).
 
 ## Installation
 
-This package is published to [JSR](https://jsr.io/@kuboon/remix-data-table-sqlite-turso). Install it together with the `@libsql/client` peer dependency (`@remix-run/data-table` is pulled in automatically):
+This package is published to [JSR](https://jsr.io/@remix-kbn/data-table-sqlite-turso). Install it together with the `@libsql/client` peer dependency (`@remix-run/data-table` is pulled in automatically):
 
 ```sh
-npx jsr add @kuboon/remix-data-table-sqlite-turso
+npx jsr add @remix-kbn/data-table-sqlite-turso
 npm i @libsql/client
 ```
 
 For Deno:
 
 ```sh
-deno add jsr:@kuboon/remix-data-table-sqlite-turso npm:@libsql/client
+deno add jsr:@remix-kbn/data-table-sqlite-turso npm:@libsql/client
 ```
 
 ## Usage
 
 ```ts
 import { createClient } from '@libsql/client'
-import { createTursoDatabase } from '@kuboon/remix-data-table-sqlite-turso'
+import { createTursoDatabase } from '@remix-kbn/data-table-sqlite-turso'
 
 let client = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -64,7 +64,7 @@ So this package ships the replacement. Wire it up as a task:
 ```jsonc
 // deno.json
 {
-  "tasks": { "db": "deno run -A jsr:@kuboon/remix-data-table-sqlite-turso/cli" }
+  "tasks": { "db": "deno run -A jsr:@remix-kbn/data-table-sqlite-turso/cli" }
 }
 ```
 
@@ -98,14 +98,14 @@ Node and Bun get the same commands from a one-line entry point, since importing 
 
 ```js
 // db/cli.js — node db/cli.js migrate
-import '@kuboon/remix-data-table-sqlite-turso/cli'
+import '@remix-kbn/data-table-sqlite-turso/cli'
 ```
 
 To embed the commands in your own script — to load `.env` first, or to build the client from `@libsql/client/web` — call the same function the executable does:
 
 ```ts
 // db/cli.ts — deno task db migrate
-import { runTursoDbCli } from '@kuboon/remix-data-table-sqlite-turso'
+import { runTursoDbCli } from '@remix-kbn/data-table-sqlite-turso'
 
 Deno.exit(await runTursoDbCli(Deno.args))
 ```
@@ -142,7 +142,7 @@ The libSQL client is always **caller-owned**. `@libsql/client` ships several ent
 
 ```ts
 import { createClient } from '@libsql/client'
-import { createTursoDatabase } from '@kuboon/remix-data-table-sqlite-turso'
+import { createTursoDatabase } from '@remix-kbn/data-table-sqlite-turso'
 
 let client = createClient({ url: 'file:app.db' })
 let db = createTursoDatabase(client)

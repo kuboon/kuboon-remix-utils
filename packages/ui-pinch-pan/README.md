@@ -1,13 +1,13 @@
-# @kuboon/remix-ui-pinch-pan
+# @remix-kbn/ui-pinch-pan
 
 Two-finger pinch and pan as a [`@remix-run/ui`](https://www.npmjs.com/package/@remix-run/ui) mixin.
 
 ```sh
-deno add jsr:@kuboon/remix-ui-pinch-pan
+deno add jsr:@remix-kbn/ui-pinch-pan
 ```
 
 ```tsx ignore
-import { pinchPan } from '@kuboon/remix-ui-pinch-pan'
+import { pinchPan } from '@remix-kbn/ui-pinch-pan'
 <div class='viewport' mix={[pinchPan({ maxScale: 6 })]}>
   <img src='/map.png' alt='' />
 </div>
@@ -112,7 +112,7 @@ The gesture arithmetic is exported separately from the DOM wiring, so a componen
 its own event handling can take the part that decides where the content lands and none of the rest:
 
 ```ts ignore
-import { advanceGesture, anchorGesture } from '@kuboon/remix-ui-pinch-pan'
+import { advanceGesture, anchorGesture } from '@remix-kbn/ui-pinch-pan'
 
 let anchor = anchorGesture(pointers, transform)
 // ... on each move, with the fingers in the content's coordinate space:

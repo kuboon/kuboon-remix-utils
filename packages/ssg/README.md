@@ -9,20 +9,20 @@ Static site generation (SSG) for [`remix/fetch-router`](https://github.com/remix
 - **Router-driven** — works with any `remix/fetch-router` router (or any `fetch`-shaped object); no framework lock-in
 - **Link-crawling** — seed a few paths and it discovers the rest by following rendered `<a>`/asset links (honoring `nofollow`)
 - **Hydration-safe** — preserves Remix UI hydration comment markers and rewrites TS/JSX asset extensions to `.js` for static hosting
-- **Runtime-agnostic core** — the main entry (`crawl`, `toOutput`, `rewriteExtensionsToJs`) depends only on web standards (`Request`/`Response`/`URL`); all filesystem writing lives in the optional `@kuboon/remix-ssg/node` subpath
+- **Runtime-agnostic core** — the main entry (`crawl`, `toOutput`, `rewriteExtensionsToJs`) depends only on web standards (`Request`/`Response`/`URL`); all filesystem writing lives in the optional `@remix-kbn/ssg/node` subpath
 
 ## Installation
 
-This package is published to [JSR](https://jsr.io/@kuboon/remix-ssg):
+This package is published to [JSR](https://jsr.io/@remix-kbn/ssg):
 
 ```sh
-npx jsr add @kuboon/remix-ssg
+npx jsr add @remix-kbn/ssg
 ```
 
 For Deno:
 
 ```sh
-deno add jsr:@kuboon/remix-ssg
+deno add jsr:@remix-kbn/ssg
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ Batteries-included, writing to disk with Node's `fs` — import it from the `/no
 
 ```ts
 import { createRouter } from 'remix/fetch-router'
-import { prerender } from '@kuboon/remix-ssg/node'
+import { prerender } from '@remix-kbn/ssg/node'
 
 let router = createRouter()
 // ...map your routes (which render HTML via @remix-run/ui/server)...
@@ -53,7 +53,7 @@ The main entry has no `node:*` imports. Crawl the router and transform each resp
 `OutputFile` (`{ path, content }`) yourself, then write it with whatever your runtime provides:
 
 ```ts
-import { crawl, toOutput } from '@kuboon/remix-ssg'
+import { crawl, toOutput } from '@remix-kbn/ssg'
 
 for await (let result of crawl(router, { paths: ['/'] })) {
   let file = await toOutput(result)
@@ -65,7 +65,7 @@ for await (let result of crawl(router, { paths: ['/'] })) {
 
 ## API
 
-### Main entry (`@kuboon/remix-ssg`) — no Node
+### Main entry (`@remix-kbn/ssg`) — no Node
 
 ### `crawl(router, options): AsyncIterableIterator<CrawlResult>`
 
@@ -74,7 +74,7 @@ The low-level spider. Drives `router.fetch()` from the seed paths, follows rende
 By default a page that responds non-OK aborts the crawl with a `CrawlError`. The error carries structured `failures` — `{ pathname, status, statusText, referrer }`, where `referrer` is the page whose HTML linked to the broken path — so you can see _which page_ produced the bad link instead of parsing a message string. Pass `onError` to keep crawling past broken links:
 
 ```ts
-import { crawl, CrawlError } from '@kuboon/remix-ssg'
+import { crawl, CrawlError } from '@remix-kbn/ssg'
 
 let broken: CrawlFailure[] = []
 for await (
@@ -101,7 +101,7 @@ Transforms one `CrawlResult` into the `{ path, content }` to write (extensions r
 
 Rewrites TS/JSX source extensions to `.js` in a rendered HTML document's asset references and inline hydration module URLs.
 
-### Node subpath (`@kuboon/remix-ssg/node`)
+### Node subpath (`@remix-kbn/ssg/node`)
 
 ### `prerender(options): Promise<PrerenderStats>`
 
@@ -125,7 +125,7 @@ Writes one `CrawlResult` to disk under `outDir` (the Node-specific half of `toOu
 
 ## The site framework
 
-`crawl` and `toOutput` are the primitives. `@kuboon/remix-ssg/site` is the assembly around them, so
+`crawl` and `toOutput` are the primitives. `@remix-kbn/ssg/site` is the assembly around them, so
 a project holds its content and nothing else.
 
 ```
@@ -148,7 +148,7 @@ my-site/
 
 ```sh
 deno serve -P=dev --watch router.ts
-deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
+deno run -c deno.json -P=build jsr:@remix-kbn/ssg/build.ts
 ```
 
 There is no dev-server command in this package, because there is nothing left for one to do:
@@ -173,7 +173,7 @@ import {
   githubPages,
   normalizeBase,
   serveAsHost,
-} from '@kuboon/remix-ssg/site'
+} from '@remix-kbn/ssg/site'
 import { markdown } from './transforms/markdown.tsx'
 import { page } from './transforms/page.tsx'
 
@@ -299,7 +299,7 @@ to see by looking at it.
 ### Islands
 
 ```tsx
-import { island } from '@kuboon/remix-ssg/client'
+import { island } from '@remix-kbn/ssg/client'
 
 export const Counter = island('counter', 'Counter', function Counter(handle) {
   return () => <button>…</button>

@@ -30,7 +30,7 @@ export class TursoDatabase extends Database<'sqlite'> {
  * @example
  * ```ts
  * import { createClient } from '@libsql/client'
- * import { createTursoDatabase } from '@kuboon/remix-data-table-sqlite-turso'
+ * import { createTursoDatabase } from '@remix-kbn/data-table-sqlite-turso'
  *
  * let client = createClient({
  *   url: process.env.TURSO_DATABASE_URL,

@@ -1,4 +1,18 @@
-# @kuboon/remix-ui-pinch-pan
+# @remix-kbn/ui-pinch-pan
+
+## 0.2.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/ui-pinch-pan`** from 0.2.0 on, and was `@kuboon/remix-ui-pinch-pan` up to 0.1.0. The `remix-` prefix goes with the move, since the scope already says it.
+
+  ```diff
+  - "@kuboon/remix-ui-pinch-pan": "jsr:@kuboon/remix-ui-pinch-pan@^0.1.0"
+  + "@remix-kbn/ui-pinch-pan": "jsr:@remix-kbn/ui-pinch-pan@^0.2.0"
+  ```
+
+  No code changed with the rename. The minor bump is so that no version number exists under both names — 0.2.0 is only ever the new one — rather than because anything behaves differently.
+
+  JSR cannot unpublish, so everything under the old name stays where it is; entries below 0.1.0 describe releases made there.
+  0.1.1 and the 0.2.0 work below were never published under the old name; 0.1.0 is where `@kuboon/remix-ui-pinch-pan` stops.
 
 ## 0.2.0
 

@@ -12,7 +12,7 @@
     "npm:@libsql/client@~0.17.4": "0.17.4",
     "npm:@modelcontextprotocol/server@2": "2.0.0",
     "npm:@remix-run/assert@0.3": "0.3.0",
-    "npm:@remix-run/data-table@0.5": "0.5.0",
+    "npm:@remix-run/data-table@0.5": "0.5.1",
     "npm:@remix-run/fetch-router@0.21": "0.21.0",
     "npm:@remix-run/fetch-router@0.22": "0.22.0",
     "npm:@remix-run/response@~0.3.8": "0.3.8",
@@ -153,8 +153,8 @@
     "@remix-run/assert@0.3.0": {
       "integrity": "sha512-GBA9klvJdG5YSTwRNur54LQcfqDOtir+x1TDbv3dzB9FS2Li9CEiRLp1EpBcaYrj4ByO03WJCWFBiY8bTMy4vQ=="
     },
-    "@remix-run/data-table@0.5.0": {
-      "integrity": "sha512-ntc23qDYnSCA2iq1r2L5+u/9MH+5207mopekOM4NRsVDrMt0e14DVq37JhfVmzcZDCb8lx7iP+D+H8i9a9IiCw=="
+    "@remix-run/data-table@0.5.1": {
+      "integrity": "sha512-AbGRuT25urh2l61iVHmaREFmke74GxfGNyxih7wdqKWXHO4zlqfkWE4NuY1BkRWeLeIT7YXdgpsN4jdGAAj5TQ=="
     },
     "@remix-run/fetch-router@0.21.0": {
       "integrity": "sha512-dN3Lsd4dHAV0USTF3Dm04effXcdr7GMgXiqeozTFDfvVIx2DbRAl94bwF6UdAWurgTOK2Oyz4cs9uadW/ylWXA==",
@@ -197,8 +197,8 @@
     "@types/dom-navigation@1.0.7": {
       "integrity": "sha512-Di4W+i2faYquHUnyWUg3bBQp5pTNvjDDA7mIYfD/1WlLgan6sKkeVjGbdL78K0CuNEk5Pfc/c0rfelwkz10mnQ=="
     },
-    "@types/node@26.2.0": {
-      "integrity": "sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==",
+    "@types/node@26.5.1": {
+      "integrity": "sha512-CzNm2FezW4VR/LjG6yUdiEgLE/rAQ9Slj5gCu/C2VrdcW7I0ahNZ8DRbHT7zOZ6r3ONgd/bsQIeSaoDGrd1C6g==",
       "dependencies": [
         "undici-types"
       ]
@@ -244,14 +244,14 @@
     "promise-limit@2.7.0": {
       "integrity": "sha512-7nJ6v5lnJsXwGprnGXga4wx6d1POjvi5Qmf1ivTRxTjH4Z/9Czja/UCMLVmB9N93GeWOU93XaFaEt6jbuoagNw=="
     },
-    "undici-types@8.3.0": {
-      "integrity": "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="
+    "undici-types@8.9.0": {
+      "integrity": "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="
     },
     "ws@8.21.3": {
       "integrity": "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="
     },
-    "zod@4.4.3": {
-      "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="
+    "zod@4.6.2": {
+      "integrity": "sha512-lh5RCAGFa1Cm2hjtNwLQhSs/AsqdWnTQaBER9fEwN/88pSh7KOtJavtBx/0VlkN/uFd61SwYmljLMDAsHlvzBQ=="
     }
   },
   "workspace": {
@@ -285,7 +285,7 @@
       },
       "packages/ssg": {
         "dependencies": [
-          "jsr:@kuboon/remix-assets-deno@0.7",
+          "jsr:@remix-kbn/assets-deno@0.8",
           "jsr:@std/cli@1",
           "jsr:@std/testing@1",
           "npm:@remix-run/assert@0.3",

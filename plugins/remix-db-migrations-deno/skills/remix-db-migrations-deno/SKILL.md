@@ -13,7 +13,7 @@ description: >-
   remix.json`, or `remix db` refusing to roll back. Also covers Turso / libSQL,
   which `remix.json` cannot describe at all (`Expected one of: sqlite, postgres,
   mysql at db.adapter.type`): there, run
-  `jsr:@kuboon/remix-data-table-sqlite-turso/cli` instead of `remix db`. Covers
+  `jsr:@remix-kbn/data-table-sqlite-turso/cli` instead of `remix db`. Covers
   the Deno-specific setup that the Node-oriented docs do not.
 ---
 
@@ -21,7 +21,7 @@ description: >-
 
 Verified against `remix@3.0.0-beta.6` (`@remix-run/cli@0.4.0`,
 `@remix-run/data-table@0.4.0`, `@remix-run/data-table-sqlite@0.6.0`,
-`@kuboon/remix-data-table-sqlite-turso@0.3.0`) on **Deno 2.9.4**. The whole
+`@remix-kbn/data-table-sqlite-turso@0.3.0`) on **Deno 2.9.4**. The whole
 `remix db` command set runs under Deno unmodified — the friction is entirely in
 how you invoke it and which packages Deno resolves. Turso / libSQL is the one
 backend `remix db` cannot reach at all; it has its own command, covered below.
@@ -131,7 +131,7 @@ command built on the same call. See below.
 
 ## Turso / libSQL: use the package's own CLI
 
-`@kuboon/remix-data-table-sqlite-turso` backs data-table with an **async**
+`@remix-kbn/data-table-sqlite-turso` backs data-table with an **async**
 libSQL client (`@libsql/client`) — remote Turso, embedded replicas, or a local
 `file:` database. The stock `data-table-sqlite` database is synchronous and
 cannot drive that client, so this package is the Turso path.
@@ -151,9 +151,9 @@ this** — the package ships one, as its `/cli` export. Point the task at it:
 // deno.json
 {
   "imports": {
-    "@kuboon/remix-data-table-sqlite-turso": "jsr:@kuboon/remix-data-table-sqlite-turso@^0.3.0"
+    "@remix-kbn/data-table-sqlite-turso": "jsr:@remix-kbn/data-table-sqlite-turso@^0.3.0"
   },
-  "tasks": { "db": "deno run -A jsr:@kuboon/remix-data-table-sqlite-turso/cli" }
+  "tasks": { "db": "deno run -A jsr:@remix-kbn/data-table-sqlite-turso/cli" }
 }
 ```
 
@@ -205,7 +205,7 @@ same function the executable does rather than reassembling it:
 
 ```ts
 // db/cli.ts — deno task db migrate
-import { runTursoDbCli } from '@kuboon/remix-data-table-sqlite-turso'
+import { runTursoDbCli } from '@remix-kbn/data-table-sqlite-turso'
 
 Deno.exit(await runTursoDbCli(Deno.args))
 ```
@@ -310,7 +310,7 @@ database from CI.
       it, but `reset`, a rollback script, and the Turso CLI's `rollback` will.
 - [ ] Non-sqlite dialects have `pg` / `mysql2` in `deno.json` imports.
 - [ ] On Turso/libSQL: the `db` task runs
-      `jsr:@kuboon/remix-data-table-sqlite-turso/cli`, not `remix db` and not a
+      `jsr:@remix-kbn/data-table-sqlite-turso/cli`, not `remix db` and not a
       hand-written `runRemixDb()` script.
 - [ ] `deno task db migrate` and `deno task db status` both run clean from a
       fresh checkout.

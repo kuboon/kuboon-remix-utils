@@ -2,6 +2,19 @@
 
 This is the changelog for [`data-table-sqlite-turso`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/data-table-sqlite-turso). It follows [semantic versioning](https://semver.org/).
 
+## 0.4.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/data-table-sqlite-turso`** from 0.4.0 on, and was `@kuboon/remix-data-table-sqlite-turso` up to 0.3.1. The `remix-` prefix goes with the move, since the scope already says it.
+
+  ```diff
+  - "@kuboon/remix-data-table-sqlite-turso": "jsr:@kuboon/remix-data-table-sqlite-turso@^0.3.1"
+  + "@remix-kbn/data-table-sqlite-turso": "jsr:@remix-kbn/data-table-sqlite-turso@^0.4.0"
+  ```
+
+  No code changed with the rename. The minor bump is so that no version number exists under both names — 0.4.0 is only ever the new one — rather than because anything behaves differently.
+
+  JSR cannot unpublish, so everything under the old name stays where it is; entries below 0.3.1 describe releases made there.
+
 ## 0.3.1
 
 - `@remix-run/data-table` 0.4.0 → 0.5.0, the `remix@3.0.0-rc.1` set. The release is additive for a dialect package: `DatabaseDriver` is byte-for-byte unchanged, `index.d.ts` exports the same surface, and the two files that moved add a `rollback` command to the CLI options union and widen `and`/`or` to take object shorthand alongside predicates. Nothing here needed changing.

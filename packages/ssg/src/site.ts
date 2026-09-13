@@ -8,7 +8,7 @@
  *
  * ```ts
  * // router.ts
- * import { compose, createFileTree, createIslands, normalizeBase } from '@kuboon/remix-ssg/site'
+ * import { compose, createFileTree, createIslands, normalizeBase } from '@remix-kbn/ssg/site'
  * import { markdown } from './transforms/markdown.tsx'
  *
  * export const base = normalizeBase(Deno.env.get('BASE_URL'))
@@ -31,7 +31,7 @@
  *
  * ```sh
  * deno serve -P=dev --watch router.ts
- * deno run -c deno.json -P=build jsr:@kuboon/remix-ssg/build.ts
+ * deno run -c deno.json -P=build jsr:@remix-kbn/ssg/build.ts
  * ```
  *
  * What is deliberately absent: any notion of what a page is made of. No content model, no document

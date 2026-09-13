@@ -7,7 +7,7 @@
  * spreading them zooms about the point between them, and doing both does both.
  *
  * ```tsx ignore
- * import { pinchPan } from '@kuboon/remix-ui-pinch-pan'
+ * import { pinchPan } from '@remix-kbn/ui-pinch-pan'
  *
  * <div class='viewport' mix={[pinchPan({ maxScale: 8 })]}>
  *   <div class='map'>…</div>
@@ -50,7 +50,7 @@
  *
  * ```tsx ignore
  * import { on } from '@remix-run/ui'
- * import { pinchPan, type PinchPanControls } from '@kuboon/remix-ui-pinch-pan'
+ * import { pinchPan, type PinchPanControls } from '@remix-kbn/ui-pinch-pan'
  *
  * let view: PinchPanControls | null = null
  *
@@ -108,7 +108,7 @@
  *   advanceGesture,
  *   anchorGesture,
  *   IDENTITY_TRANSFORM,
- * } from '@kuboon/remix-ui-pinch-pan'
+ * } from '@remix-kbn/ui-pinch-pan'
  *
  * // Two fingers 100px apart, either side of (150, 150).
  * let down = [{ id: 1, x: 100, y: 150 }, { id: 2, x: 200, y: 150 }]

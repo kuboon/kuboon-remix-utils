@@ -2,6 +2,20 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.10.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/ssg`** from 0.10.0 on, and was `@kuboon/remix-ssg` up to 0.9.0. The `remix-` prefix goes with the move, since the scope already says it.
+
+  ```diff
+  - "@kuboon/remix-ssg": "jsr:@kuboon/remix-ssg@^0.9.0"
+  + "@remix-kbn/ssg": "jsr:@remix-kbn/ssg@^0.10.0"
+  ```
+
+  No code changed with the rename. The minor bump is so that no version number exists under both names — 0.10.0 is only ever the new one — rather than because anything behaves differently.
+
+  JSR cannot unpublish, so everything under the old name stays where it is; entries below 0.9.0 describe releases made there.
+- `@remix-kbn/assets-deno` `^0.7.0` → `^0.8.0`, which is that package's own move. Both ranges have to turn over together or a consumer resolves the asset server twice, once under each name.
+
 ## 0.9.0
 
 - Tracks the `remix@3.0.0-rc.2` package set: `@remix-run/fetch-router` 0.21 → 0.22 and `@remix-run/ui` 0.8 → 0.9. Both are additive for what this package uses — `renderToStream`, `clientEntry`, `run` — and `fetch-router` appears only in a doc comment. A minor rather than a patch for the same reason 0.7.0 was: a `^0.22.0` range excludes 0.21, so leaving it would resolve a consumer a second copy of the router.

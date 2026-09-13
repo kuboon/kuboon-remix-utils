@@ -76,7 +76,7 @@ export interface PrerenderStats {
  * @example
  * ```ts
  * import { createRouter } from '@remix-run/fetch-router'
- * import { prerender } from '@kuboon/remix-ssg/node'
+ * import { prerender } from '@remix-kbn/ssg/node'
  *
  * let router = createRouter()
  * // ...map routes...
