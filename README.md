@@ -1,4 +1,4 @@
-# kuboon-remix-utils
+# remix-kbn
 
 `@remix-kbn`-scoped utility packages for [remix](https://github.com/remix-run/remix), published to [JSR](https://jsr.io/@remix-kbn).
 

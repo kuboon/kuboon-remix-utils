@@ -1,6 +1,6 @@
 # `remix-assets-deno` CHANGELOG
 
-This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
+This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/remix-kbn/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
 ## 0.8.0
 

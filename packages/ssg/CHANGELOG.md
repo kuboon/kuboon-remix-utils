@@ -1,6 +1,6 @@
 # `remix-ssg` CHANGELOG
 
-This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
+This is the changelog for [`remix-ssg`](https://github.com/kuboon/remix-kbn/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
 ## 0.10.0
 

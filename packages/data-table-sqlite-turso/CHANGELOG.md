@@ -1,6 +1,6 @@
 # `data-table-sqlite-turso` CHANGELOG
 
-This is the changelog for [`data-table-sqlite-turso`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/data-table-sqlite-turso). It follows [semantic versioning](https://semver.org/).
+This is the changelog for [`data-table-sqlite-turso`](https://github.com/kuboon/remix-kbn/tree/main/packages/data-table-sqlite-turso). It follows [semantic versioning](https://semver.org/).
 
 ## 0.4.0
 
