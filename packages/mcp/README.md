@@ -1,8 +1,7 @@
 # remix-mcp
 
-> **This package has moved to [`@remix-kbn/mcp`](https://jsr.io/@remix-kbn/mcp).** The `remix-` prefix goes with the
-> move, because the scope now says it. `0.1.2` is the last release under `@kuboon/remix-mcp` and carries only
-> this notice; nothing breaks if you stay, since JSR cannot unpublish.
+> Renamed from `@kuboon/remix-mcp` at 0.2.0. The old name stops at 0.1.2 and stays on
+> JSR; nothing was unpublished.
 
 Serve a [Model Context Protocol](https://modelcontextprotocol.io) server from a
 [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router) route.
@@ -27,16 +26,16 @@ Host/Origin checks the MCP spec asks local servers to perform.
 
 ## Installation
 
-This package is published to [JSR](https://jsr.io/@kuboon/remix-mcp):
+This package is published to [JSR](https://jsr.io/@remix-kbn/mcp):
 
 ```sh
-deno add jsr:@kuboon/remix-mcp npm:@modelcontextprotocol/server npm:@remix-run/fetch-router
+deno add jsr:@remix-kbn/mcp npm:@modelcontextprotocol/server npm:@remix-run/fetch-router
 ```
 
 For Node:
 
 ```sh
-npx jsr add @kuboon/remix-mcp
+npx jsr add @remix-kbn/mcp
 npm install @modelcontextprotocol/server @remix-run/fetch-router
 ```
 
@@ -45,7 +44,7 @@ npm install @modelcontextprotocol/server @remix-run/fetch-router
 ```ts
 import { McpServer } from '@modelcontextprotocol/server'
 import { createRouter } from '@remix-run/fetch-router'
-import { mcp } from '@kuboon/remix-mcp'
+import { mcp } from '@remix-kbn/mcp'
 import * as z from 'zod'
 
 let server = new McpServer({ name: 'my-server', version: '1.0.0' })

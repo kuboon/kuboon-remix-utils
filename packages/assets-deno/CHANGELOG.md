@@ -2,6 +2,19 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.8.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/assets-deno`** from 0.8.0 on. The `remix-` prefix went with the move, because the scope says it now.
+
+  ```diff
+  - "@kuboon/remix-assets-deno": "jsr:@kuboon/remix-assets-deno@^0.7.1"
+  + "@remix-kbn/assets-deno": "jsr:@remix-kbn/assets-deno@^0.8.0"
+  ```
+
+  No code changed. The minor bump is so that no version number exists under both names — 0.8.0 is only ever the new one.
+
+  `@kuboon/remix-assets-deno` stops at 0.7.1, whose only content was the notice that this was coming. JSR cannot unpublish, so every version under the old name keeps resolving exactly as it did; entries below 0.7.1 describe releases made there.
+
 ## 0.7.1
 
 - Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/assets-deno`**, with the `remix-` prefix dropped because the scope now says it.

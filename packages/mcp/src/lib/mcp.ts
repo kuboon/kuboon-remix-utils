@@ -104,7 +104,7 @@ function resolveAllowed(
  * ```ts
  * import { McpServer } from '@modelcontextprotocol/server'
  * import { createRouter } from '@remix-run/fetch-router'
- * import { mcp } from '@kuboon/remix-mcp'
+ * import { mcp } from '@remix-kbn/mcp'
  *
  * let server = new McpServer({ name: 'my-server', version: '1.0.0' })
  *

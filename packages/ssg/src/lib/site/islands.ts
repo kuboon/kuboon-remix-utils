@@ -11,8 +11,8 @@
  */
 
 import * as path from 'node:path'
-import { createAssetServer } from '@kuboon/remix-assets-deno'
-import type { BundleModeOptions } from '@kuboon/remix-assets-deno'
+import { createAssetServer } from '@remix-kbn/assets-deno'
+import type { BundleModeOptions } from '@remix-kbn/assets-deno'
 
 import type { SiteMiddleware } from './middleware.ts'
 

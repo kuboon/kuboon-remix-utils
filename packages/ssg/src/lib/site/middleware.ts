@@ -2,7 +2,7 @@
  * The contract a site is assembled from.
  *
  * A site is a handful of things that answer requests under a path prefix, composed into one
- * handler. `@kuboon/remix-assets-deno`'s asset server already has this shape — mount point, fetch,
+ * handler. `@remix-kbn/assets-deno`'s asset server already has this shape — mount point, fetch,
  * what it serves, rebuild — so a file tree of pages that matches it composes with islands for free,
  * and the build and the dev server drive the same object.
  */

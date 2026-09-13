@@ -1,6 +1,6 @@
 {
-  "name": "@kuboon/remix-mcp",
-  "version": "0.1.2",
+  "name": "@remix-kbn/mcp",
+  "version": "0.2.0",
   "license": "MIT",
   "exports": "./src/index.ts",
   "imports": {

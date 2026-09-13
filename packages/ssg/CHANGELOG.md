@@ -2,6 +2,20 @@
 
 This is the changelog for [`remix-ssg`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/ssg). It follows [semantic versioning](https://semver.org/).
 
+## 0.10.0
+
+- Moved to the `@remix-kbn` scope: this package is **`@remix-kbn/ssg`** from 0.10.0 on. The `remix-` prefix went with the move, because the scope says it now.
+
+  ```diff
+  - "@kuboon/remix-ssg": "jsr:@kuboon/remix-ssg@^0.9.1"
+  + "@remix-kbn/ssg": "jsr:@remix-kbn/ssg@^0.10.0"
+  ```
+
+  No code changed. The minor bump is so that no version number exists under both names — 0.10.0 is only ever the new one.
+
+  `@kuboon/remix-ssg` stops at 0.9.1, whose only content was the notice that this was coming. JSR cannot unpublish, so every version under the old name keeps resolving exactly as it did; entries below 0.9.1 describe releases made there.
+- `@remix-kbn/assets-deno` `^0.7.0` → `^0.8.0`, which is that package's own move. Both ranges have to turn over together, or a consumer resolves the asset server twice — once under each name.
+
 ## 0.9.1
 
 - Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/ssg`**, with the `remix-` prefix dropped because the scope now says it.

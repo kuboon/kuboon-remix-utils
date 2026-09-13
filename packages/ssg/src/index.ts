@@ -3,22 +3,8 @@
  * drive a router in-process with `router.fetch()`, follow the links in what it renders, and write
  * every response to disk.
  *
- * ## This package has moved
- *
- * It continues as **`@remix-kbn/ssg`**. The `remix-` prefix goes with the move, because the scope now
- * says it.
- *
- * ```diff
- * - "@kuboon/remix-ssg": "jsr:@kuboon/remix-ssg@^0.9.0"
- * + "@remix-kbn/ssg": "jsr:@remix-kbn/ssg"
- * ```
- *
- * 0.9.1 carries this notice and nothing else — its code is 0.9.0's. What comes after it
- * is published under the new name; if `@remix-kbn/ssg` is not on JSR yet as you read this, that is the
- * only thing left to happen.
- *
- * Nothing breaks if you stay. JSR cannot unpublish, so every version under this name keeps
- * resolving exactly as it does today, and there is no deadline attached to moving.
+ * Renamed from `@kuboon/remix-ssg` at 0.10.0; the `remix-` prefix went with the move, because the
+ * scope says it now. The old name stops at 0.9.1 and stays on JSR — nothing was unpublished.
  *
  * @module
  */
