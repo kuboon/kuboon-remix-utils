@@ -1,6 +1,6 @@
 # `remix-mcp` CHANGELOG
 
-This is the changelog for [`remix-mcp`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/mcp). It follows [semantic versioning](https://semver.org/).
+This is the changelog for [`remix-mcp`](https://github.com/kuboon/remix-kbn/tree/main/packages/mcp). It follows [semantic versioning](https://semver.org/).
 
 ## 0.2.0
 
