@@ -1,5 +1,9 @@
 # remix-mcp
 
+> **This package has moved to [`@remix-kbn/mcp`](https://jsr.io/@remix-kbn/mcp).** The `remix-` prefix goes with the
+> move, because the scope now says it. `0.1.2` is the last release under `@kuboon/remix-mcp` and carries only
+> this notice; nothing breaks if you stay, since JSR cannot unpublish.
+
 Serve a [Model Context Protocol](https://modelcontextprotocol.io) server from a
 [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router) route.
 

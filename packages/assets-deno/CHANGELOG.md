@@ -2,6 +2,17 @@
 
 This is the changelog for [`remix-assets-deno`](https://github.com/kuboon/kuboon-remix-utils/tree/main/packages/assets-deno). It follows [semantic versioning](https://semver.org/).
 
+## 0.7.1
+
+- Moving to the `@remix-kbn` scope: this package continues as **`@remix-kbn/assets-deno`**, with the `remix-` prefix dropped because the scope now says it.
+
+  ```diff
+  - "@kuboon/remix-assets-deno": "jsr:@kuboon/remix-assets-deno@^0.7.0"
+  + "@remix-kbn/assets-deno": "jsr:@remix-kbn/assets-deno"
+  ```
+
+  0.7.1 is the announcement and nothing more — its code is 0.7.0's, byte for byte. Nothing breaks if you stay: JSR cannot unpublish, so every version under this name keeps resolving exactly as it does today, and there is no deadline attached to moving.
+
 ## 0.7.0
 
 - Added `getScriptEntry(entry)`, which answers with the entry's `href`, its `preloads`, and an `importMap` in one call. `@remix-run/render-middleware` 0.3.0 (the `remix@3.0.0-rc.2` set) asks an asset server for exactly that, having asked for `getHref` and `getPreloads` separately before, so `render({ assets })` no longer type-checks against a server without it.

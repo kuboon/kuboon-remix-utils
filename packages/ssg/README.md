@@ -1,5 +1,9 @@
 # remix-ssg
 
+> **This package has moved to [`@remix-kbn/ssg`](https://jsr.io/@remix-kbn/ssg).** The `remix-` prefix goes with the
+> move, because the scope now says it. `0.9.1` is the last release under `@kuboon/remix-ssg` and carries only
+> this notice; nothing breaks if you stay, since JSR cannot unpublish.
+
 Static site generation (SSG) for [`remix/fetch-router`](https://github.com/remix-run/remix/tree/main/packages/fetch-router). Pre-render a Remix router to static HTML files at build time.
 
 `remix-ssg` drives your router in-process with `router.fetch()`, spiders the links and asset references in the rendered HTML, and writes every response to disk as a static site. Rendering happens inside your router (via `@remix-run/ui/server`), so this package adds the crawl-and-write layer, not a renderer. It is a generalized extraction of the prerenderer that builds the Remix docs site.

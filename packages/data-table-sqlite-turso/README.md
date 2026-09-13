@@ -1,5 +1,9 @@
 # data-table-sqlite-turso
 
+> **This package has moved to [`@remix-kbn/data-table-sqlite-turso`](https://jsr.io/@remix-kbn/data-table-sqlite-turso).** The `remix-` prefix goes with the
+> move, because the scope now says it. `0.3.2` is the last release under `@kuboon/remix-data-table-sqlite-turso` and carries only
+> this notice; nothing breaks if you stay, since JSR cannot unpublish.
+
 Turso / libSQL database for [`remix/data-table`](https://github.com/remix-run/remix/tree/main/packages/data-table). Use this package when you want `data-table` APIs backed by an asynchronous SQLite client such as [`@libsql/client`](https://www.npmjs.com/package/@libsql/client).
 
 Turso speaks the SQLite dialect but exposes an async, promise-based client, so the synchronous [`data-table-sqlite`](https://github.com/remix-run/remix/tree/main/packages/data-table-sqlite) database cannot drive it. This package awaits every client call, which makes it a good fit for remote Turso databases, embedded replicas, and other libSQL deployments.
